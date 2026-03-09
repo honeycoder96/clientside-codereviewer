@@ -143,13 +143,13 @@ For manual testing:
 
 ## Areas Where Help Is Needed
 
-High-impact contributions:
+See [`spec/FUTURE_ENHANCEMENTS.md`](./spec/FUTURE_ENHANCEMENTS.md) for detailed specs on all planned phases. High-impact contributions:
 
-- **Model Selector** (Phase 7) — let users choose from multiple MLC-compiled models
 - **Export & Reports** (Phase 10) — download reviews as Markdown/JSON/CSV
+- **GitHub PR Integration** (Phase 8) — paste a PR URL to fetch the diff automatically
 - **Automated tests** — unit tests for `src/lib/` modules (chunker, scoring, parseResponse)
 - **Accessibility** — keyboard navigation, screen reader support, ARIA labels
-- **Performance** — virtualized file tree, Web Worker for chunking
+- **Performance** (Phase 13) — virtualized file tree, Web Worker for chunking
 
 ## Submitting a Pull Request
 

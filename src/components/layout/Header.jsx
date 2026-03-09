@@ -5,6 +5,7 @@ import { estimateTotalChunks } from '../../lib/chunker'
 import { LARGE_FILE_THRESHOLD, LARGE_CHUNK_THRESHOLD } from '../../config.js'
 import Badge from '../ui/Badge'
 import LargeDiffWarning from '../input/LargeDiffWarning'
+import ExportMenu from '../review/ExportMenu'
 
 export default function Header() {
   const files         = useStore((s) => s.files)
@@ -63,6 +64,7 @@ export default function Header() {
               {isReviewing ? 'Reviewing...' : 'Start Review'}
             </button>
           )}
+          <ExportMenu />
           <button
             onClick={clearDiff}
             disabled={isReviewing}

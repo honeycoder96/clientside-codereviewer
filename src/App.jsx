@@ -3,6 +3,7 @@ import { useStore } from './store/useStore'
 import ModelLoader from './components/model/ModelLoader'
 import ReviewDashboard from './components/ReviewDashboard'
 import NoWebGPU from './components/model/NoWebGPU'
+import Navbar from './components/layout/Navbar'
 
 const gpuSupported = typeof navigator !== 'undefined' && !!navigator.gpu
 
@@ -23,7 +24,7 @@ class ErrorBoundary extends Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-gray-900 flex items-center justify-center p-6">
+        <div className="h-full bg-gray-900 flex items-center justify-center p-6">
           <div className="max-w-md text-center flex flex-col gap-4">
             <p className="text-red-400 font-semibold">Something went wrong</p>
             <p className="text-gray-400 text-sm">{this.state.message}</p>
@@ -51,7 +52,12 @@ function App() {
 export default function Root() {
   return (
     <ErrorBoundary>
-      <App />
+      <div className="flex flex-col h-screen bg-gray-900 overflow-hidden">
+        <Navbar />
+        <div className="flex-1 overflow-hidden">
+          <App />
+        </div>
+      </div>
     </ErrorBoundary>
   )
 }

@@ -129,7 +129,7 @@ export default function ReviewDashboard() {
     <RightPanel />
 
   return (
-    <div className="flex flex-col h-screen bg-gray-900 overflow-hidden">
+    <div className="flex flex-col h-full bg-gray-900 overflow-hidden">
       <Header />
       <SplitLayout
         left={<LeftPanel />}

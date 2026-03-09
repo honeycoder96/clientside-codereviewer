@@ -1,17 +1,17 @@
 import { create } from 'zustand'
-import { createEngine, getEngine } from '../lib/engine'
+import { createEngine, getEngine, destroyEngine } from '../lib/engine'
 import { parseDiff as parseDiffFn } from '../lib/diffParser'
 import { reviewDiff, cancelCurrentReview } from '../lib/reviewer'
 import { saveReview } from '../lib/persist'
 import { AGENT_IDS } from '../lib/agents'
+import { DEFAULT_MODEL_ID } from '../lib/models'
+import { STORAGE_KEYS } from '../config'
 
-const DEFAULT_MODEL = 'Phi-3.5-mini-instruct-q4f16_1-MLC'
-
-const engineSlice = (set) => ({
+const engineSlice = (set, get) => ({
   engineStatus: 'idle',
   loadProgress: 0,
   loadMessage: '',
-  selectedModel: DEFAULT_MODEL,
+  selectedModel: localStorage.getItem(STORAGE_KEYS.SELECTED_MODEL) ?? DEFAULT_MODEL_ID,
 
   initEngine: async () => {
     const model = useStore.getState().selectedModel
@@ -31,6 +31,40 @@ const engineSlice = (set) => ({
 
   resetEngine: () => {
     set({ engineStatus: 'idle', loadProgress: 0, loadMessage: '' })
+  },
+
+  setModel: (modelId) => {
+    // Only allow pre-load model selection
+    if (get().engineStatus !== 'idle') return
+    localStorage.setItem(STORAGE_KEYS.SELECTED_MODEL, modelId)
+    set({ selectedModel: modelId })
+  },
+
+  switchModel: (modelId) => {
+    // Mid-session switch: cancel review, destroy engine, reset all state
+    cancelCurrentReview()
+    destroyEngine()
+    localStorage.setItem(STORAGE_KEYS.SELECTED_MODEL, modelId)
+    set({
+      selectedModel: modelId,
+      engineStatus: 'idle',
+      loadProgress: 0,
+      loadMessage: '',
+      // Reset review state so stale results don't linger
+      reviewStatus: 'idle',
+      streamingText: '',
+      currentAgentId: null,
+      tokensPerSecond: 0,
+      fileReviews: new Map(),
+      diffReview: null,
+      files: [],
+      rawDiff: '',
+      selectedFile: null,
+      selectedFiles: new Set(),
+      fileStatuses: new Map(),
+      agentStatuses: new Map(),
+      reviewWarnings: [],
+    })
   },
 })
 

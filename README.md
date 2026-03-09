@@ -4,6 +4,7 @@ A fully client-side, multi-agent code review tool powered by [WebLLM](https://gi
 
 **Zero server costs. Zero data leaves the browser.**
 
+![alt text](image.png)
 ---
 
 ## Why This Exists
@@ -21,6 +22,16 @@ This tool runs a full multi-agent review pipeline entirely in-browser using WebG
   - **Summary Agent** — deduplicates findings, ranks by severity, produces a cohesive summary
 
 - **Agent Memory** — each agent receives findings from prior agents, building cumulative context without running multiple models
+
+- **Model Selector** — choose from 5 MLC-compiled models ranging from 1.8 GB to 4.9 GB; selection persists across sessions and can be changed mid-session without a page refresh:
+
+  | Model | Size | Context | Notes |
+  |---|---|---|---|
+  | Phi-3.5 Mini | 2.2 GB | 4K | Default — fast, reliable |
+  | Llama 3.2 3B | 1.8 GB | 4K | Smallest download |
+  | Llama 3.1 8B | 4.9 GB | 8K | Best for large diffs |
+  | Mistral 7B | 4.1 GB | 8K | Strong reasoning |
+  | Qwen 2.5 Coder 7B | 4.3 GB | 8K | **Best for code review** |
 
 - **Progressive Results** — file-by-file processing with real-time token streaming. See results as they arrive instead of waiting for the entire review to finish
 
@@ -40,11 +51,11 @@ This tool runs a full multi-agent review pipeline entirely in-browser using WebG
 
 ## Requirements
 
-| Requirement | Minimum |
+| Requirement | Details |
 |---|---|
 | Browser | Chrome 113+ or Edge 113+ (WebGPU required) |
-| GPU VRAM | 4 GB |
-| Disk Space | ~2.2 GB (model cached in IndexedDB after first download) |
+| GPU VRAM | 3 GB minimum (for Phi-3.5 Mini); 6 GB recommended for 7–8B models |
+| Disk Space | 1.8–4.9 GB depending on selected model (cached in IndexedDB after first download) |
 | Node.js | 18+ (for local development only) |
 
 > Firefox and Safari do not yet support WebGPU. On Chrome, ensure `chrome://flags/#enable-unsafe-webgpu` is enabled if WebGPU is not available by default.
@@ -67,10 +78,13 @@ Open [http://localhost:5173](http://localhost:5173) in Chrome or Edge.
 
 ### First Run
 
-1. Click **Load Model** — the Phi-3.5-mini model (~2.2 GB) downloads and caches in IndexedDB
-2. Paste a unified diff (output from `git diff` or a `.diff` file from a GitHub PR)
-3. Select which files to review (all are checked by default)
-4. Click **Start Review** and watch the agents work
+1. **Choose a model** — select from the model picker on the loader screen. Phi-3.5 Mini is the default (2.2 GB, fastest). Qwen 2.5 Coder produces the highest quality results (4.3 GB).
+2. Click **Load Model** — model weights download and cache in IndexedDB (one-time per model)
+3. Paste a unified diff (output from `git diff` or a `.diff` file from a GitHub PR)
+4. Select which files to review (all are checked by default)
+5. Click **Start Review** and watch the agents work
+
+To switch models after loading, click the model name in the top navigation bar or the status bar at the bottom.
 
 ## Usage
 
@@ -144,22 +158,23 @@ Inline comments appear directly in the diff viewer for the selected file, anchor
 src/
 ├── lib/                    # Core logic (framework-agnostic)
 │   ├── engine.js           # WebLLM singleton & model lifecycle
+│   ├── models.js           # Model catalog (5 MLC models with metadata)
 │   ├── diffParser.js       # Unified diff parsing & file filtering
 │   ├── chunker.js          # Semantic chunking (500–800 tokens)
 │   ├── agents.js           # 4-agent pipeline orchestration
 │   ├── prompts.js          # LLM prompt templates
-│   ├── parseResponse.js    # JSON extraction from LLM output
+│   ├── parseResponse.js    # JSON extraction & sanitization from LLM output
 │   ├── scoring.js          # Risk calculation (0–10)
 │   ├── reviewer.js         # Top-level review orchestration
 │   └── persist.js          # localStorage save/restore
 ├── store/
 │   └── useStore.js         # Zustand store (engine, diff, review, ui slices)
 ├── components/
-│   ├── model/              # Model loading & WebGPU detection
+│   ├── model/              # ModelLoader, ModelSelector, ModelSwitchDialog, NoWebGPU
 │   ├── input/              # Diff textarea, agent progress, warnings
 │   ├── diff/               # File tree, diff viewer, inline comments
 │   ├── review/             # Results tabs (summary, security, tests, commit)
-│   ├── layout/             # Header, status bar, split pane, dashboard
+│   ├── layout/             # Navbar, Header, StatusBar, SplitLayout
 │   └── ui/                 # Badge, spinner, streaming text
 ├── hooks/
 │   └── useKeyboardShortcuts.js
@@ -184,6 +199,7 @@ src/
 | Layer | Technology |
 |---|---|
 | LLM Inference | [@mlc-ai/web-llm](https://github.com/mlc-ai/web-llm) (WebGPU) |
+| Supported Models | Phi-3.5-mini · Llama 3.2 3B · Llama 3.1 8B · Mistral 7B · Qwen 2.5 Coder 7B |
 | Default Model | Phi-3.5-mini-instruct (q4f16, 2.2 GB, 4K context) |
 | UI Framework | React 19 |
 | Build Tool | Vite 7 |
@@ -210,15 +226,17 @@ npm run lint      # Run ESLint
 
 ## Roadmap
 
-Planned features:
+| Feature | Status |
+|---|---|
+| Model Selector (5 models, mid-session switching) | ✅ Shipped |
+| Export & Reports — Markdown, JSON, CSV download | ✅ Shipped |
+| GitHub PR Integration — paste a PR URL instead of raw diff | ⏸ Deferred |
+| Review History — IndexedDB-backed browsable past reviews | ⏸ Deferred |
+| Prompt Customization — agent focus, toggle agents, severity filters | 🔜 Next |
+| Responsive Layout — full mobile support | Planned |
+| CI Integration — headless Node.js CLI + GitHub Actions | Planned |
 
-- **Model Selector** — choose between Phi-3.5-mini, Llama-3.2-3B, Mistral-7B, Qwen2.5-Coder-7B
-- **GitHub PR Integration** — paste a PR URL instead of raw diff
-- **Review History** — IndexedDB-backed history with browsable past reviews
-- **Export & Reports** — download reviews as Markdown, JSON, or CSV
-- **Prompt Customization** — tune agent focus, toggle agents, filter by severity
-- **Responsive Layout** — full mobile support
-- **CI Integration** — headless Node.js CLI + GitHub Actions
+See [`spec/FUTURE_ENHANCEMENTS.md`](./spec/FUTURE_ENHANCEMENTS.md) for detailed specs on each planned phase.
 
 ## Contributing
 

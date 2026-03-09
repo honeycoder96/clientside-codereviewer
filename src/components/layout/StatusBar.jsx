@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../../store/useStore'
+import ModelSwitchDialog from '../model/ModelSwitchDialog'
 
 const SHORTCUTS = [
   { key: 'j', desc: 'Next file' },
@@ -42,6 +43,7 @@ export default function StatusBar() {
   const selectedFile   = useStore((s) => s.selectedFile)
 
   const [showHelp, setShowHelp] = useState(false)
+  const [showSwitch, setShowSwitch] = useState(false)
 
   const modelShort = selectedModel.split('-').slice(0, 2).join('-')
 
@@ -53,7 +55,13 @@ export default function StatusBar() {
             engineStatus === 'ready' ? 'bg-green-500' : 'bg-gray-600'
           }`}
         />
-        <span className="font-mono">{modelShort}</span>
+        <button
+          onClick={() => setShowSwitch(true)}
+          title="Switch model"
+          className="font-mono hover:text-gray-300 transition-colors"
+        >
+          {modelShort}
+        </button>
       </div>
 
       <div className="flex items-center gap-3">
@@ -84,6 +92,7 @@ export default function StatusBar() {
       </div>
 
       {showHelp && <KeyboardHelpPopover onClose={() => setShowHelp(false)} />}
+      {showSwitch && <ModelSwitchDialog onClose={() => setShowSwitch(false)} />}
     </footer>
   )
 }
