@@ -49,6 +49,19 @@ This tool runs a full multi-agent review pipeline entirely in-browser using WebG
 
 - **Large Diff Warning** — guardrail for diffs with 15+ files or 60+ estimated chunks
 
+- **Responsive Layout** — fully functional at 375px (iPhone SE and up):
+  - Bottom tab bar switches between Diff and Review panels
+  - File tree opens as a 70vh bottom sheet, triggered by a "≡ Files" bar; auto-closes on file select
+  - Header collapses to compact single-line layout; StatusBar hidden (bottom slot used by tab bar)
+  - Desktop split-pane layout unchanged above 768px
+
+- **Review Settings** — ⚙ slide-over panel with three tabs:
+  - **Focus** — free-text context injected into every agent prompt (e.g. "React + TypeScript — focus on hooks")
+  - **Agents** — toggle individual agents on/off to skip passes and speed up review
+  - **Filters** — set minimum severity and hide/show issue categories across all panels without re-running inference; amber dot on ⚙ icon when filters are active
+
+- **Export & Reports** — download the completed review as Markdown, JSON, or CSV, or copy Markdown to clipboard
+
 ## Requirements
 
 | Requirement | Details |
@@ -168,16 +181,19 @@ src/
 │   ├── reviewer.js         # Top-level review orchestration
 │   └── persist.js          # localStorage save/restore
 ├── store/
-│   └── useStore.js         # Zustand store (engine, diff, review, ui slices)
+│   └── useStore.js         # Zustand store (engine, diff, review, settings, ui slices)
 ├── components/
 │   ├── model/              # ModelLoader, ModelSelector, ModelSwitchDialog, NoWebGPU
 │   ├── input/              # Diff textarea, agent progress, warnings
 │   ├── diff/               # File tree, diff viewer, inline comments
 │   ├── review/             # Results tabs (summary, security, tests, commit)
+│   ├── settings/           # SettingsPanel (Focus / Agents / Filters slide-over)
 │   ├── layout/             # Navbar, Header, StatusBar, SplitLayout
 │   └── ui/                 # Badge, spinner, streaming text
 ├── hooks/
-│   └── useKeyboardShortcuts.js
+│   ├── useKeyboardShortcuts.js
+│   ├── useIssueFilters.js  # Severity + category filter hook
+│   └── useBreakpoint.js    # matchMedia(max-width: 767px) responsive hook
 └── styles/
     └── diff.css            # Diff viewer theme
 ```
@@ -230,11 +246,9 @@ npm run lint      # Run ESLint
 |---|---|
 | Model Selector (5 models, mid-session switching) | ✅ Shipped |
 | Export & Reports — Markdown, JSON, CSV download | ✅ Shipped |
-| GitHub PR Integration — paste a PR URL instead of raw diff | ⏸ Deferred |
-| Review History — IndexedDB-backed browsable past reviews | ⏸ Deferred |
-| Prompt Customization — agent focus, toggle agents, severity filters | 🔜 Next |
-| Responsive Layout — full mobile support | Planned |
-| CI Integration — headless Node.js CLI + GitHub Actions | Planned |
+| Prompt Customization — agent focus, toggle agents, severity filters | ✅ Shipped |
+| Responsive Layout — full mobile support (375px+) | ✅ Shipped |
+| Performance & Scale — Web Workers, virtualized FileTree, lazy comments | 🔜 Next |
 
 See [`spec/FUTURE_ENHANCEMENTS.md`](./spec/FUTURE_ENHANCEMENTS.md) for detailed specs on each planned phase.
 

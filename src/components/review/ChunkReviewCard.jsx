@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Badge from '../ui/Badge'
+import { useIssueFilters } from '../../hooks/useIssueFilters'
 
 const AGENT_ICONS = {
   bug:         '🔍',
@@ -44,9 +45,12 @@ function IssueRow({ issue }) {
 
 export default function ChunkReviewCard({ chunkReview }) {
   const [agentExpanded, setAgentExpanded] = useState(false)
-  const issueCount = chunkReview.mergedIssues?.length ?? 0
+  const { filterIssues } = useIssueFilters()
+  const visibleIssues = filterIssues(chunkReview.mergedIssues ?? [])
+  const issueCount = visibleIssues.length
   const failed =
-    (!chunkReview.agentResults || chunkReview.agentResults.length === 0) && issueCount === 0
+    (!chunkReview.agentResults || chunkReview.agentResults.length === 0) &&
+    (chunkReview.mergedIssues?.length ?? 0) === 0
 
   if (failed) {
     return (
@@ -78,7 +82,7 @@ export default function ChunkReviewCard({ chunkReview }) {
       {/* Issues */}
       {issueCount > 0 && (
         <div className="flex flex-col">
-          {chunkReview.mergedIssues.map((issue, i) => (
+          {visibleIssues.map((issue, i) => (
             <IssueRow key={`${issue.line}:${issue.category}:${i}`} issue={issue} />
           ))}
         </div>

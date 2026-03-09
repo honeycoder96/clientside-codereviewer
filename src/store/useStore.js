@@ -227,6 +227,62 @@ const reviewSlice = (set, get) => ({
   clearStreamingText: () => set({ streamingText: '' }),
 })
 
+const DEFAULT_ISSUE_FILTERS = { minSeverity: 'info', categories: ['bug', 'security', 'performance'] }
+
+function loadEnabledAgents() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.ENABLED_AGENTS))
+    if (Array.isArray(saved)) return new Set(saved)
+  } catch { /* ignore */ }
+  return new Set(AGENT_IDS)
+}
+
+function loadIssueFilters() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.ISSUE_FILTERS))
+    if (saved && typeof saved === 'object') return { ...DEFAULT_ISSUE_FILTERS, ...saved }
+  } catch { /* ignore */ }
+  return { ...DEFAULT_ISSUE_FILTERS }
+}
+
+const settingsSlice = (set, get) => ({
+  focusContext:  localStorage.getItem(STORAGE_KEYS.FOCUS_CONTEXT) ?? '',
+  enabledAgents: loadEnabledAgents(),
+  issueFilters:  loadIssueFilters(),
+  settingsOpen:  false,
+
+  setFocusContext: (text) => {
+    localStorage.setItem(STORAGE_KEYS.FOCUS_CONTEXT, text)
+    set({ focusContext: text })
+  },
+
+  toggleAgent: (agentId) => {
+    const next = new Set(get().enabledAgents)
+    if (next.has(agentId)) next.delete(agentId); else next.add(agentId)
+    localStorage.setItem(STORAGE_KEYS.ENABLED_AGENTS, JSON.stringify([...next]))
+    set({ enabledAgents: next })
+  },
+
+  setIssueFilters: (patch) => {
+    const next = { ...get().issueFilters, ...patch }
+    localStorage.setItem(STORAGE_KEYS.ISSUE_FILTERS, JSON.stringify(next))
+    set({ issueFilters: next })
+  },
+
+  setSettingsOpen: (open) => set({ settingsOpen: open }),
+
+  resetSettings: () => {
+    localStorage.removeItem(STORAGE_KEYS.FOCUS_CONTEXT)
+    localStorage.removeItem(STORAGE_KEYS.ENABLED_AGENTS)
+    localStorage.removeItem(STORAGE_KEYS.ISSUE_FILTERS)
+    set({
+      focusContext:  '',
+      enabledAgents: new Set(AGENT_IDS),
+      issueFilters:  { ...DEFAULT_ISSUE_FILTERS },
+    })
+  },
+})
+
 const uiSlice = (set) => ({
   selectedFile: null,
   rightPanelTab: 'summary',
@@ -256,5 +312,6 @@ export const useStore = create((set, get) => ({
   ...engineSlice(set, get),
   ...diffSlice(set, get),
   ...reviewSlice(set, get),
+  ...settingsSlice(set, get),
   ...uiSlice(set, get),
 }))

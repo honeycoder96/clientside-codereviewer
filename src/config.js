@@ -36,5 +36,8 @@ export const STORAGE_KEYS = {
   FILES: 'wgpu_cr_files',
   DIFF_REVIEW: 'wgpu_cr_diffReview',
   FILE_REVIEWS: 'wgpu_cr_fileReviews',
-  SELECTED_MODEL: 'wgpu_cr_selectedModel',
+  SELECTED_MODEL:  'wgpu_cr_selectedModel',
+  FOCUS_CONTEXT:   'wgpu_cr_focusContext',
+  ENABLED_AGENTS:  'wgpu_cr_enabledAgents',
+  ISSUE_FILTERS:   'wgpu_cr_issueFilters',
 }

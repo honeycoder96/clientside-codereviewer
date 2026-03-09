@@ -4,6 +4,7 @@ import { loadSavedReview, clearSavedReview } from '../../lib/persist'
 import { MAX_FILE_SIZE_BYTES } from '../../config.js'
 import { isModelCached } from '../../lib/engine'
 import { getModelById } from '../../lib/models'
+import { useBreakpoint } from '../../hooks/useBreakpoint'
 import ModelSelector from '../model/ModelSelector'
 import ProgressBar from '../model/ProgressBar'
 import HeroSection from '../layout/HeroSection'
@@ -36,6 +37,7 @@ export default function DiffInputArea() {
   const [dragging, setDragging] = useState(false)
   const [savedReview, setSavedReview] = useState(() => loadSavedReview())
   const textareaRef = useRef(null)
+  const { isMobile } = useBreakpoint()
 
   const setDiff = useStore((s) => s.setDiff)
   const parseDiff = useStore((s) => s.parseDiff)
@@ -265,7 +267,7 @@ export default function DiffInputArea() {
               'Paste your unified diff here...\n\nOr drag & drop a .diff / .patch file onto this area.\n\n$ git diff\n$ git diff --staged'
             }
             className="w-full bg-transparent text-gray-300 font-mono text-xs p-4 resize-none outline-none placeholder-gray-700 leading-relaxed"
-            style={{ minHeight: '400px' }}
+            style={{ minHeight: isMobile ? '40vh' : '400px' }}
             spellCheck={false}
           />
 
@@ -289,6 +291,10 @@ export default function DiffInputArea() {
       {error && (
         <p className="text-xs text-red-400 font-mono px-1 leading-relaxed">{error}</p>
       )}
+
+      <p className="text-[11px] text-gray-600 px-1 leading-relaxed">
+        After loading the diff you can choose which files to review and configure focus context, agent toggles, and issue filters via the <span className="text-gray-500">⚙</span> settings panel before starting.
+      </p>
 
       <div className="flex items-center justify-between gap-3">
         <span className="text-[10px] font-mono text-gray-700">

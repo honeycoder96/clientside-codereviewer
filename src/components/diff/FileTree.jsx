@@ -34,7 +34,7 @@ function buildTree(files) {
   return root
 }
 
-function FileRow({ file, activeFile, fileStatuses, selectedFiles, onSelect, onToggle }) {
+function FileRow({ file, activeFile, fileStatuses, selectedFiles, onSelect, onToggle, showFullPath = false }) {
   const isActive  = activeFile === file.filename
   const isChecked = selectedFiles.has(file.filename)
   const reviewStatus = fileStatuses.get(file.filename)
@@ -66,7 +66,18 @@ function FileRow({ file, activeFile, fileStatuses, selectedFiles, onSelect, onTo
         >
           {si.symbol}
         </span>
-        <span className="flex-1 truncate font-mono text-xs">{file.basename}</span>
+        {showFullPath ? (
+          <span className="flex-1 min-w-0 font-mono text-xs" title={file.filename}>
+            {file.filename.includes('/') && (
+              <span className={`${isActive ? 'text-indigo-200' : isChecked ? 'text-gray-500' : 'text-gray-700'}`}>
+                {file.filename.slice(0, file.filename.lastIndexOf('/') + 1)}
+              </span>
+            )}
+            <span className="truncate">{file.basename}</span>
+          </span>
+        ) : (
+          <span className="flex-1 truncate font-mono text-xs">{file.basename}</span>
+        )}
         <span className="text-xs flex-shrink-0">
           <span className={isActive || isChecked ? 'text-green-400' : 'text-gray-700'}>
             +{file.additions}
@@ -126,6 +137,7 @@ function TreeNode({ name, node, depth, activeFile, fileStatuses, selectedFiles, 
                 selectedFiles={selectedFiles}
                 onSelect={onSelect}
                 onToggle={onToggle}
+                showFullPath={false}
               />
             </div>
           ))}
@@ -147,6 +159,8 @@ export default function FileTree() {
   const selectAllFiles      = useStore((s) => s.selectAllFiles)
   const deselectAllFiles    = useStore((s) => s.deselectAllFiles)
 
+  const [viewMode, setViewMode] = useState('flat')
+
   // Sort by risk score (desc) when review is done
   const sortedFiles = useMemo(
     () =>
@@ -164,27 +178,54 @@ export default function FileTree() {
   const totalAdditions = files.reduce((s, f) => s + f.additions, 0)
   const totalDeletions = files.reduce((s, f) => s + f.deletions, 0)
 
+  const toggleBtnClass = (mode) =>
+    `text-xs px-1.5 py-0.5 rounded transition-colors ${
+      viewMode === mode
+        ? 'bg-gray-600 text-gray-200'
+        : 'text-gray-600 hover:text-gray-400'
+    }`
+
   return (
     <div className="flex flex-col h-full">
       <div className="px-3 py-2 border-b border-gray-700 flex-shrink-0">
         <div className="flex items-center justify-between">
           <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Files</p>
-          {files.length > 1 && reviewStatus !== 'reviewing' && (
-            <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            {/* View mode toggle */}
+            <div className="flex items-center gap-0.5 border border-gray-700 rounded p-0.5">
               <button
-                onClick={selectAllFiles}
-                className="text-xs text-gray-600 hover:text-gray-300 transition-colors"
+                onClick={() => setViewMode('flat')}
+                className={toggleBtnClass('flat')}
+                title="Flat list"
               >
-                All
+                ≡
               </button>
               <button
-                onClick={deselectAllFiles}
-                className="text-xs text-gray-600 hover:text-gray-300 transition-colors"
+                onClick={() => setViewMode('tree')}
+                className={toggleBtnClass('tree')}
+                title="Tree view"
               >
-                None
+                ⌥
               </button>
             </div>
-          )}
+            {/* Select all / none */}
+            {files.length > 1 && reviewStatus !== 'reviewing' && (
+              <div className="flex gap-2">
+                <button
+                  onClick={selectAllFiles}
+                  className="text-xs text-gray-600 hover:text-gray-300 transition-colors"
+                >
+                  All
+                </button>
+                <button
+                  onClick={deselectAllFiles}
+                  className="text-xs text-gray-600 hover:text-gray-300 transition-colors"
+                >
+                  None
+                </button>
+              </div>
+            )}
+          </div>
         </div>
         <p className="text-xs text-gray-500 mt-0.5">
           {files.length} file{files.length !== 1 ? 's' : ''}
@@ -198,16 +239,33 @@ export default function FileTree() {
         </p>
       </div>
       <div className="flex-1 overflow-y-auto py-1">
-        <TreeNode
-          name=""
-          node={tree}
-          depth={0}
-          activeFile={selectedFile}
-          fileStatuses={fileStatuses}
-          selectedFiles={selectedFiles}
-          onSelect={selectFile}
-          onToggle={toggleFileSelection}
-        />
+        {viewMode === 'flat' ? (
+          <div className="px-1">
+            {sortedFiles.map((file) => (
+              <FileRow
+                key={file.filename}
+                file={file}
+                activeFile={selectedFile}
+                fileStatuses={fileStatuses}
+                selectedFiles={selectedFiles}
+                onSelect={selectFile}
+                onToggle={toggleFileSelection}
+                showFullPath
+              />
+            ))}
+          </div>
+        ) : (
+          <TreeNode
+            name=""
+            node={tree}
+            depth={0}
+            activeFile={selectedFile}
+            fileStatuses={fileStatuses}
+            selectedFiles={selectedFiles}
+            onSelect={selectFile}
+            onToggle={toggleFileSelection}
+          />
+        )}
       </div>
     </div>
   )

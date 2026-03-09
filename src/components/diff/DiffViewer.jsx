@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { Diff, Hunk, Decoration, parseDiff, getChangeKey } from 'react-diff-view'
 import { useStore } from '../../store/useStore'
+import { useIssueFilters } from '../../hooks/useIssueFilters'
 import InlineComment from './InlineComment'
 
 /**
@@ -47,6 +48,7 @@ export default function DiffViewer() {
   const rawDiff       = useStore((s) => s.rawDiff)
   const fileStatuses  = useStore((s) => s.fileStatuses)
   const fileReviews   = useStore((s) => s.fileReviews)
+  const { filterIssues } = useIssueFilters()
 
   const rdvFile = useMemo(() => {
     if (!selectedFile || !rawDiff) return null
@@ -61,6 +63,11 @@ export default function DiffViewer() {
   const fileStatus = fileStatuses.get(selectedFile)
   const fileReview = fileReviews.get(selectedFile)
   const showComments = fileStatus === 'done' && fileReview
+
+  const filteredFileReview = useMemo(() => {
+    if (!fileReview) return null
+    return { ...fileReview, mergedIssues: filterIssues(fileReview.mergedIssues ?? []) }
+  }, [fileReview, filterIssues])
 
   if (!selectedFile) {
     return (
@@ -92,7 +99,7 @@ export default function DiffViewer() {
         viewType="unified"
         diffType={rdvFile.type}
         hunks={rdvFile.hunks}
-        widgets={showComments ? buildWidgets(fileReview, rdvFile.hunks) : {}}
+        widgets={showComments ? buildWidgets(filteredFileReview, rdvFile.hunks) : {}}
       >
         {(hunks) =>
           hunks.map((hunk, i) => [

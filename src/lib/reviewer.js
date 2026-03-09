@@ -2,6 +2,7 @@ import { chunkFile } from './chunker.js'
 import { runAgentPipeline } from './agents.js'
 import { calculateFileRisk, calculateOverallRisk, countBySeverity } from './scoring.js'
 import { COMMIT_MESSAGE_PROMPT, TEST_SUGGESTION_PROMPT } from './prompts.js'
+import { useStore } from '../store/useStore.js'
 
 // Module-level abort controller — cancelled via cancelCurrentReview()
 let _abortController = null
@@ -56,6 +57,9 @@ export async function reviewDiff(engine, files, callbacks = {}) {
   _abortController = new AbortController()
   const signal = _abortController.signal
 
+  const { enabledAgents, focusContext } = useStore.getState()
+  const pipelineOptions = { enabledAgentIds: enabledAgents, focusContext }
+
   const startedAt = Date.now()
 
   // Build chunk list grouped by file
@@ -103,7 +107,7 @@ export async function reviewDiff(engine, files, callbacks = {}) {
           onAgentComplete: (id, result) => callbacks.onAgentComplete?.(id, result),
           onTps: (tps) => callbacks.onTps?.(tps),
           clearStreaming: () => callbacks.clearStreaming?.(),
-        }, signal)
+        }, signal, pipelineOptions)
 
         chunkReviews.push(chunkReview)
       } catch (err) {

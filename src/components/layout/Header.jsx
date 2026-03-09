@@ -3,9 +3,12 @@ import { useStore } from '../../store/useStore'
 import { calculateOverallRisk } from '../../lib/scoring'
 import { estimateTotalChunks } from '../../lib/chunker'
 import { LARGE_FILE_THRESHOLD, LARGE_CHUNK_THRESHOLD } from '../../config.js'
+import { useIssueFilters } from '../../hooks/useIssueFilters'
+import { useBreakpoint } from '../../hooks/useBreakpoint'
 import Badge from '../ui/Badge'
 import LargeDiffWarning from '../input/LargeDiffWarning'
 import ExportMenu from '../review/ExportMenu'
+import SettingsPanel from '../settings/SettingsPanel'
 
 export default function Header() {
   const files         = useStore((s) => s.files)
@@ -15,6 +18,10 @@ export default function Header() {
   const fileReviews   = useStore((s) => s.fileReviews)
   const diffReview    = useStore((s) => s.diffReview)
   const selectedFiles = useStore((s) => s.selectedFiles)
+
+  const setSettingsOpen = useStore((s) => s.setSettingsOpen)
+  const { isFiltered }  = useIssueFilters()
+  const { isMobile }    = useBreakpoint()
 
   const [showWarning, setShowWarning] = useState(false)
 
@@ -43,16 +50,18 @@ export default function Header() {
     <>
       <header className="flex items-center justify-between px-4 py-2 border-b border-gray-700 bg-gray-900 flex-shrink-0 h-11">
         <span className="text-sm font-semibold text-white tracking-tight">
-          WebGPU Code Reviewer
+          {isMobile ? 'WebGPU' : 'WebGPU Code Reviewer'}
         </span>
 
-        <div className="flex items-center gap-3 text-xs text-gray-400">
-          <span>{files.length} file{files.length !== 1 ? 's' : ''}</span>
-          <span className="text-gray-600">·</span>
-          <span className="text-green-400">+{totalAdditions}</span>
-          <span className="text-red-400">-{totalDeletions}</span>
-          <Badge risk={risk} showDash />
-        </div>
+        {!isMobile && (
+          <div className="flex items-center gap-3 text-xs text-gray-400">
+            <span>{files.length} file{files.length !== 1 ? 's' : ''}</span>
+            <span className="text-gray-600">·</span>
+            <span className="text-green-400">+{totalAdditions}</span>
+            <span className="text-red-400">-{totalDeletions}</span>
+            <Badge risk={risk} showDash />
+          </div>
+        )}
 
         <div className="flex items-center gap-2">
           {(canStart || isReviewing) && (
@@ -61,19 +70,30 @@ export default function Header() {
               disabled={isReviewing}
               className="text-xs px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded transition-colors"
             >
-              {isReviewing ? 'Reviewing...' : 'Start Review'}
+              {isReviewing ? 'Reviewing…' : 'Start Review'}
             </button>
           )}
-          <ExportMenu />
+          {!isMobile && <ExportMenu />}
+          <button
+            onClick={() => setSettingsOpen(true)}
+            className="relative text-xs px-2.5 py-1.5 border border-gray-600 hover:border-gray-400 text-gray-400 hover:text-white rounded transition-colors"
+            title="Review settings"
+          >
+            ⚙
+            {isFiltered && (
+              <span className="absolute -top-1 -right-1 w-2 h-2 bg-amber-400 rounded-full" />
+            )}
+          </button>
           <button
             onClick={clearDiff}
             disabled={isReviewing}
             className="text-xs px-3 py-1.5 border border-gray-600 hover:border-gray-400 text-gray-400 hover:text-white rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            New Review
+            {isMobile ? '✕' : 'New Review'}
           </button>
         </div>
       </header>
+      <SettingsPanel />
 
       {showWarning && (
         <LargeDiffWarning

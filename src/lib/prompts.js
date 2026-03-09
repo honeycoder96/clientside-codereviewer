@@ -54,9 +54,13 @@ Files changed:
 
 /**
  * Formats a ReviewChunk into the user message sent to every agent.
+ * If focusContext is provided it is prepended as a preamble.
  */
-export function buildChunkPrompt(chunk) {
-  return `File: ${chunk.filename} (${chunk.language})
+export function buildChunkPrompt(chunk, focusContext = '') {
+  const preamble = focusContext.trim()
+    ? `Additional context for this review:\n${focusContext.trim()}\n\n`
+    : ''
+  return `${preamble}File: ${chunk.filename} (${chunk.language})
 Lines: ${chunk.startLine}–${chunk.endLine}
 
 Diff:

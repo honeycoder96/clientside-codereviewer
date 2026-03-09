@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../../store/useStore'
+import { useIssueFilters } from '../../hooks/useIssueFilters'
 import Badge from '../ui/Badge'
 import Spinner from '../ui/Spinner'
 
@@ -36,16 +37,19 @@ function SecurityIssueRow({ issue }) {
 }
 
 export default function SecurityFindings() {
-  const reviewStatus = useStore((s) => s.reviewStatus)
-  const fileReviews  = useStore((s) => s.fileReviews)
+  const reviewStatus  = useStore((s) => s.reviewStatus)
+  const fileReviews   = useStore((s) => s.fileReviews)
+  const { filterIssues } = useIssueFilters()
 
-  const securityIssues = [...fileReviews.values()]
+  const allSecurityIssues = [...fileReviews.values()]
     .flatMap((fr) =>
       fr.mergedIssues
         .filter((i) => i.category === 'security')
         .map((i) => ({ ...i, filename: fr.filename }))
     )
     .sort((a, b) => (SEVERITY_ORDER[a.severity] ?? 3) - (SEVERITY_ORDER[b.severity] ?? 3))
+
+  const securityIssues = filterIssues(allSecurityIssues)
 
   if (reviewStatus === 'reviewing' && securityIssues.length === 0) {
     return (

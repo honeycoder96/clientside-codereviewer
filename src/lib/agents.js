@@ -73,11 +73,11 @@ function buildSystemPrompt(agent, priorResults) {
  * Run a single agent pass over one chunk.
  * Returns AgentResult.
  */
-export async function runAgentOnChunk(engine, agent, chunk, priorResults = [], callbacks = {}, signal) {
+export async function runAgentOnChunk(engine, agent, chunk, priorResults = [], callbacks = {}, signal, focusContext = '') {
   const systemPrompt = buildSystemPrompt(agent, priorResults)
   const messages = [
     { role: 'system', content: systemPrompt },
-    { role: 'user', content: buildChunkPrompt(chunk) },
+    { role: 'user', content: buildChunkPrompt(chunk, focusContext) },
   ]
 
   const startMs = Date.now()
@@ -117,13 +117,20 @@ export async function runAgentOnChunk(engine, agent, chunk, priorResults = [], c
 }
 
 /**
- * Run all 4 agents sequentially on a chunk, threading prior results as context.
+ * Run enabled agents sequentially on a chunk, threading prior results as context.
  * Returns ChunkReview.
+ *
+ * @param {object}   options
+ * @param {Set}      [options.enabledAgentIds]  — which agents to run (default: all)
+ * @param {string}   [options.focusContext]      — injected into every prompt
  */
-export async function runAgentPipeline(engine, chunk, callbacks = {}, signal) {
+export async function runAgentPipeline(engine, chunk, callbacks = {}, signal, options = {}) {
+  const { enabledAgentIds = new Set(AGENT_IDS), focusContext = '' } = options
+
+  const agentsToRun = AGENTS.filter((a) => enabledAgentIds.has(a.id))
   const priorResults = []
 
-  for (const agent of AGENTS) {
+  for (const agent of agentsToRun) {
     if (signal?.aborted) {
       const err = new Error('Review cancelled')
       err.name = 'AbortError'
@@ -133,7 +140,7 @@ export async function runAgentPipeline(engine, chunk, callbacks = {}, signal) {
     callbacks.onAgentStart?.(agent.id)
 
     const result = await runAgentOnChunk(
-      engine, agent, chunk, priorResults, callbacks, signal
+      engine, agent, chunk, priorResults, callbacks, signal, focusContext
     )
 
     callbacks.onAgentComplete?.(agent.id, result)
@@ -141,9 +148,10 @@ export async function runAgentPipeline(engine, chunk, callbacks = {}, signal) {
     priorResults.push(result)
   }
 
-  // Summary agent is last; its issues are the deduplicated final set
-  const summaryResult = priorResults[priorResults.length - 1]
-  const mergedIssues = mergeAgentResults(priorResults.slice(0, 3))
+  const summaryResult = priorResults.find((r) => r.agentId === 'summary')
+  const dataResults   = priorResults.filter((r) => r.agentId !== 'summary')
+  const mergedIssues  = mergeAgentResults(dataResults)
+  const summary       = summaryResult?.summary ?? dataResults[dataResults.length - 1]?.summary ?? ''
 
   return {
     chunkId: chunk.id,
@@ -152,7 +160,7 @@ export async function runAgentPipeline(engine, chunk, callbacks = {}, signal) {
     endLine: chunk.endLine,
     agentResults: priorResults,
     mergedIssues,
-    summary: summaryResult.summary,
+    summary,
   }
 }
 

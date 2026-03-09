@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../../store/useStore'
+import { useBreakpoint } from '../../hooks/useBreakpoint'
 import ModelSwitchDialog from '../model/ModelSwitchDialog'
 
 const SHORTCUTS = [
@@ -35,6 +36,7 @@ function KeyboardHelpPopover({ onClose }) {
 }
 
 export default function StatusBar() {
+  const { isMobile } = useBreakpoint()
   const selectedModel  = useStore((s) => s.selectedModel)
   const engineStatus   = useStore((s) => s.engineStatus)
   const reviewStatus   = useStore((s) => s.reviewStatus)
@@ -44,6 +46,8 @@ export default function StatusBar() {
 
   const [showHelp, setShowHelp] = useState(false)
   const [showSwitch, setShowSwitch] = useState(false)
+
+  if (isMobile) return null
 
   const modelShort = selectedModel.split('-').slice(0, 2).join('-')
 
