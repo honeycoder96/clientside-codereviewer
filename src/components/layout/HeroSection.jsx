@@ -1,3 +1,5 @@
+import FeaturesSection from './FeaturesSection'
+
 const FEATURES = [
     {
         label: '4 specialized agents',
@@ -47,7 +49,8 @@ export default function HeroSection({ children }) {
                 backgroundSize: '28px 28px',
             }}
         >
-            <div className="min-h-full flex items-center justify-center px-6 py-12">
+            {/* ── Hero ── */}
+            <div className="min-h-screen flex items-center justify-center px-6 py-12">
                 <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-[1fr_1.1fr] gap-10 lg:gap-16 items-center">
 
                     {/* ── Left: Hero copy ── */}
@@ -138,6 +141,14 @@ export default function HeroSection({ children }) {
                                 ))}
                             </div>
                         </div>
+
+                        {/* Scroll hint */}
+                        <div className="flex items-center gap-2 text-gray-700 text-[11px] font-mono">
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                                <path d="M6 2v8M3 7l3 3 3-3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                            scroll to explore all features
+                        </div>
                     </div>
 
                     {/* ── Right: Slot for each page's content ── */}
@@ -145,6 +156,9 @@ export default function HeroSection({ children }) {
 
                 </div>
             </div>
+
+            {/* ── Features section ── */}
+            <FeaturesSection />
         </div>
     )
 }

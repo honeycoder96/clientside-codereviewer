@@ -96,3 +96,30 @@
 .diff-gutter-omit:before {
   background-color: var(--diff-omit-gutter-line-color);
 }
+
+/* ── Split view ─────────────────────────────────────────────────────────── */
+
+/* Separator between old (left) and new (right) halves */
+.diff-split .diff-gutter:nth-child(3) {
+  border-left: 1px solid #374151; /* gray-700 */
+}
+.diff-split .diff-code:nth-child(4) {
+  border-left: none;
+}
+
+/* Empty placeholder cell — line exists only on one side */
+.diff-code-null {
+  background-color: #0d1117;
+}
+.diff-gutter-null {
+  background-color: #0d1117;
+  color: transparent;
+  user-select: none;
+}
+
+/* Prevent long lines from blowing out each half-width column */
+.diff-split .diff-code {
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

@@ -1,18 +1,24 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useStore } from '../store/useStore'
 
 const IGNORED_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT'])
 
 export function useKeyboardShortcuts() {
-  const files        = useStore((s) => s.files)
-  const selectedFile = useStore((s) => s.selectedFile)
-  const reviewStatus = useStore((s) => s.reviewStatus)
-  const selectFile   = useStore((s) => s.selectFile)
-  const clearDiff    = useStore((s) => s.clearDiff)
-  const initReview   = useStore((s) => s.initReview)
+  const files           = useStore((s) => s.files)
+  const selectedFile    = useStore((s) => s.selectedFile)
+  const reviewStatus    = useStore((s) => s.reviewStatus)
+  const selectFile      = useStore((s) => s.selectFile)
+  const clearDiff       = useStore((s) => s.clearDiff)
+  const initReview      = useStore((s) => s.initReview)
+  const diffViewMode    = useStore((s) => s.diffViewMode)
+  const setDiffViewMode = useStore((s) => s.setDiffViewMode)
+  const paletteOpen     = useStore((s) => s.paletteOpen)
+
+  const navTimerRef = useRef(null)
 
   useEffect(() => {
     function onKey(e) {
+      if (paletteOpen) return
       if (IGNORED_TAGS.has(e.target.tagName)) return
       if (e.target.contentEditable === 'true') return
       if (files.length === 0) return
@@ -20,15 +26,20 @@ export function useKeyboardShortcuts() {
       const idx = files.findIndex((f) => f.filename === selectedFile)
 
       switch (e.key) {
-        case 'j':
+        case 'j': {
           e.preventDefault()
-          selectFile(files[Math.min(idx + 1, files.length - 1)]?.filename ?? null)
+          const next = files[Math.min(idx + 1, files.length - 1)]?.filename ?? null
+          clearTimeout(navTimerRef.current)
+          navTimerRef.current = setTimeout(() => selectFile(next), 150)
           break
-        case 'k':
+        }
+        case 'k': {
           e.preventDefault()
-          // When nothing is selected (idx === -1), 'k' selects the last file (symmetric with 'j' → first)
-          selectFile(files[idx === -1 ? files.length - 1 : Math.max(idx - 1, 0)]?.filename ?? null)
+          const prev = files[idx === -1 ? files.length - 1 : Math.max(idx - 1, 0)]?.filename ?? null
+          clearTimeout(navTimerRef.current)
+          navTimerRef.current = setTimeout(() => selectFile(prev), 150)
           break
+        }
         case 'r':
           if (reviewStatus === 'idle') initReview()
           break
@@ -38,10 +49,16 @@ export function useKeyboardShortcuts() {
         case 'Escape':
           selectFile(null)
           break
+        case 'v':
+          setDiffViewMode(diffViewMode === 'unified' ? 'split' : 'unified')
+          break
       }
     }
 
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [files, selectedFile, reviewStatus, selectFile, clearDiff, initReview])
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      clearTimeout(navTimerRef.current)
+    }
+  }, [files, selectedFile, reviewStatus, selectFile, clearDiff, initReview, diffViewMode, setDiffViewMode, paletteOpen])
 }

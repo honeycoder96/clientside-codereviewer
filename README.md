@@ -190,6 +190,9 @@ src/
 │   ├── settings/           # SettingsPanel (Focus / Agents / Filters slide-over)
 │   ├── layout/             # Navbar, Header, StatusBar, SplitLayout
 │   └── ui/                 # Badge, spinner, streaming text
+├── workers/
+│   ├── diffParser.worker.js  # parseDiff off main thread (Vite module worker)
+│   └── chunker.worker.js     # chunkFile off main thread
 ├── hooks/
 │   ├── useKeyboardShortcuts.js
 │   ├── useIssueFilters.js  # Severity + category filter hook
@@ -248,7 +251,7 @@ npm run lint      # Run ESLint
 | Export & Reports — Markdown, JSON, CSV download | ✅ Shipped |
 | Prompt Customization — agent focus, toggle agents, severity filters | ✅ Shipped |
 | Responsive Layout — full mobile support (375px+) | ✅ Shipped |
-| Performance & Scale — Web Workers, virtualized FileTree, lazy comments | 🔜 Next |
+| Performance & Scale — Web Workers, virtualized FileTree, lazy comments | ✅ Shipped |
 
 See [`spec/FUTURE_ENHANCEMENTS.md`](./spec/FUTURE_ENHANCEMENTS.md) for detailed specs on each planned phase.
 

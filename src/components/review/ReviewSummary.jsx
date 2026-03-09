@@ -75,15 +75,27 @@ function MiniProgressBar({ value, max }) {
 }
 
 export default function ReviewSummary() {
-  const reviewStatus   = useStore((s) => s.reviewStatus)
-  const fileReviews    = useStore((s) => s.fileReviews)
-  const files          = useStore((s) => s.files)
-  const diffReview     = useStore((s) => s.diffReview)
-  const selectedModel  = useStore((s) => s.selectedModel)
-  const reviewWarnings = useStore((s) => s.reviewWarnings)
+  const reviewStatus      = useStore((s) => s.reviewStatus)
+  const fileReviews       = useStore((s) => s.fileReviews)
+  const files             = useStore((s) => s.files)
+  const diffReview        = useStore((s) => s.diffReview)
+  const selectedModel     = useStore((s) => s.selectedModel)
+  const reviewWarnings    = useStore((s) => s.reviewWarnings)
+  const reviewImportMeta  = useStore((s) => s.reviewImportMeta)
+  const userAnnotations   = useStore((s) => s.userAnnotations)
+  const clearAnnotations  = useStore((s) => s.clearAnnotations)
 
   // Memoize — fileReviews Map reference changes only when items are added
   const completedReviews = useMemo(() => [...fileReviews.values()], [fileReviews])
+
+  const annotationCounts = useMemo(() => {
+    let accepted = 0, dismissed = 0
+    for (const v of userAnnotations.values()) {
+      if (v === 'accepted')  accepted++
+      if (v === 'dismissed') dismissed++
+    }
+    return { accepted, dismissed }
+  }, [userAnnotations])
 
   if (reviewStatus === 'reviewing') {
     const completedCount = completedReviews.length
@@ -137,6 +149,25 @@ export default function ReviewSummary() {
           <span className="text-green-400 font-medium text-sm">Review complete</span>
         </div>
 
+        {/* Import provenance banner */}
+        {reviewImportMeta && (
+          <div className="flex items-start gap-1.5 text-xs text-indigo-300 bg-indigo-950/50 border border-indigo-800/40 rounded px-2.5 py-2 leading-relaxed">
+            <span className="flex-shrink-0 mt-px">↑</span>
+            <span>
+              Imported review
+              {reviewImportMeta.model && (
+                <> · <span className="font-mono text-indigo-400">{reviewImportMeta.model.split('-').slice(0, 2).join('-')}</span></>
+              )}
+              {reviewImportMeta.reviewMode && (
+                <> · {reviewImportMeta.reviewMode} mode</>
+              )}
+              {reviewImportMeta.createdAt && (
+                <> · {reviewImportMeta.createdAt.slice(0, 10)}</>
+              )}
+            </span>
+          </div>
+        )}
+
         {/* Warnings (chunk failures, save errors) */}
         {reviewWarnings.length > 0 && (
           <div className="flex flex-col gap-1">
@@ -164,6 +195,26 @@ export default function ReviewSummary() {
             <span className="text-green-400">No issues found</span>
           )}
         </div>
+
+        {/* Annotation counts */}
+        {(annotationCounts.accepted > 0 || annotationCounts.dismissed > 0) && (
+          <div className="flex items-center gap-3 text-xs border-t border-gray-800 pt-3">
+            <span className="text-gray-600">Annotations:</span>
+            {annotationCounts.accepted  > 0 && (
+              <span className="text-emerald-500">{annotationCounts.accepted} accepted</span>
+            )}
+            {annotationCounts.dismissed > 0 && (
+              <span className="text-gray-500">{annotationCounts.dismissed} dismissed</span>
+            )}
+            <button
+              onClick={clearAnnotations}
+              className="ml-auto text-gray-700 hover:text-gray-400 transition-colors text-[10px]"
+              title="Clear all annotations"
+            >
+              clear
+            </button>
+          </div>
+        )}
 
         {/* Meta */}
         <div className="flex flex-col gap-1 text-xs text-gray-500 border-t border-gray-700 pt-3">

@@ -4,10 +4,12 @@ import { useBreakpoint } from '../../hooks/useBreakpoint'
 import ModelSwitchDialog from '../model/ModelSwitchDialog'
 
 const SHORTCUTS = [
+  { key: '⌘K', desc: 'Command palette' },
   { key: 'j', desc: 'Next file' },
   { key: 'k', desc: 'Previous file' },
   { key: 'r', desc: 'Start review' },
   { key: 'n', desc: 'New review' },
+  { key: 'v', desc: 'Toggle diff view' },
   { key: 'Esc', desc: 'Deselect file' },
 ]
 
@@ -43,6 +45,8 @@ export default function StatusBar() {
   const tokensPerSecond = useStore((s) => s.tokensPerSecond)
   const currentAgentId = useStore((s) => s.currentAgentId)
   const selectedFile   = useStore((s) => s.selectedFile)
+
+  const setPaletteOpen = useStore((s) => s.setPaletteOpen)
 
   const [showHelp, setShowHelp] = useState(false)
   const [showSwitch, setShowSwitch] = useState(false)
@@ -87,9 +91,17 @@ export default function StatusBar() {
         )}
 
         <button
+          onClick={() => setPaletteOpen(true)}
+          title="Command palette (⌘K)"
+          className="text-[10px] font-mono px-1.5 py-0.5 border border-gray-700 hover:border-gray-500 hover:text-gray-300 rounded transition-colors"
+        >
+          ⌘K
+        </button>
+
+        <button
           onClick={() => setShowHelp((v) => !v)}
           title="Keyboard shortcuts"
-          className="ml-1 w-4 h-4 rounded-full border border-gray-700 hover:border-gray-500 hover:text-gray-300 flex items-center justify-center transition-colors"
+          className="w-4 h-4 rounded-full border border-gray-700 hover:border-gray-500 hover:text-gray-300 flex items-center justify-center transition-colors"
         >
           ?
         </button>

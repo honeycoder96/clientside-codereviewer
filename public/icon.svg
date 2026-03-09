@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="#0f172a"/>
+  <!-- Left angle bracket < -->
+  <path d="M168 200 L112 256 L168 312" stroke="#6366f1" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Right angle bracket > -->
+  <path d="M236 200 L292 256 L236 312" stroke="#6366f1" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Slash / -->
+  <line x1="320" y1="188" x2="272" y2="324" stroke="#818cf8" stroke-width="32" stroke-linecap="round"/>
+  <!-- Checkmark circle bottom-right — review done indicator -->
+  <circle cx="384" cy="368" r="56" fill="#0f172a"/>
+  <circle cx="384" cy="368" r="48" fill="#166534"/>
+  <path d="M360 368 L378 386 L412 352" stroke="#4ade80" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

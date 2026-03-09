@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Full bleed background (maskable — OS will crop shape) -->
+  <rect width="512" height="512" fill="#0f172a"/>
+  <!-- Content scaled/padded to fit in the inner 80% safe zone (102px margin each side) -->
+  <!-- Left angle bracket < -->
+  <path d="M186 210 L138 256 L186 302" stroke="#6366f1" stroke-width="30" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Right angle bracket > -->
+  <path d="M244 210 L292 256 L244 302" stroke="#6366f1" stroke-width="30" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Slash / -->
+  <line x1="316" y1="200" x2="274" y2="312" stroke="#818cf8" stroke-width="26" stroke-linecap="round"/>
+  <!-- Checkmark circle -->
+  <circle cx="370" cy="358" r="42" fill="#166534"/>
+  <path d="M350 358 L365 373 L394 342" stroke="#4ade80" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

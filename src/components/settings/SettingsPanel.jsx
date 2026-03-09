@@ -6,7 +6,6 @@ const AGENT_LABELS = {
   bug:         { name: 'Bug Reviewer',         icon: '🔍', desc: 'Logic errors, null checks, edge cases' },
   security:    { name: 'Security Auditor',      icon: '🔒', desc: 'XSS, injection, secrets, path traversal' },
   performance: { name: 'Performance Reviewer',  icon: '⚡', desc: 'N+1 queries, memory leaks, re-renders' },
-  summary:     { name: 'Summary Agent',         icon: '🧠', desc: 'Deduplicates and ranks all findings' },
 }
 
 const SEVERITY_OPTIONS = [
@@ -44,50 +43,99 @@ function FocusTab() {
 }
 
 function AgentsTab() {
-  const enabledAgents = useStore((s) => s.enabledAgents)
-  const toggleAgent   = useStore((s) => s.toggleAgent)
-  const reviewStatus  = useStore((s) => s.reviewStatus)
-  const isReviewing   = reviewStatus === 'reviewing'
-  const summaryDisabled = !enabledAgents.has('summary')
+  const enabledAgents  = useStore((s) => s.enabledAgents)
+  const toggleAgent    = useStore((s) => s.toggleAgent)
+  const reviewMode     = useStore((s) => s.reviewMode)
+  const setReviewMode  = useStore((s) => s.setReviewMode)
+  const reviewStatus   = useStore((s) => s.reviewStatus)
+  const isReviewing    = reviewStatus === 'reviewing'
 
   return (
-    <div className="flex flex-col gap-1">
-      <p className="text-xs text-gray-500 leading-relaxed mb-2">
-        Disabled agents are skipped entirely, reducing inference time by ~25% per skipped agent.
-      </p>
-      {AGENT_IDS.map((id) => {
-        const { name, icon, desc } = AGENT_LABELS[id]
-        const enabled = enabledAgents.has(id)
-        return (
-          <label
-            key={id}
-            className={`flex items-start gap-3 p-2.5 rounded cursor-pointer transition-colors ${
-              isReviewing ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-800'
+    <div className="flex flex-col gap-4">
+
+      {/* Review mode toggle */}
+      <div className="flex flex-col gap-2">
+        <label className="text-xs text-gray-400 font-medium">Review mode</label>
+        <div className="flex rounded overflow-hidden border border-gray-700">
+          <button
+            onClick={() => !isReviewing && setReviewMode('fast')}
+            disabled={isReviewing}
+            className={`flex-1 py-2 text-xs font-medium transition-colors ${
+              isReviewing ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+            } ${
+              reviewMode === 'fast'
+                ? 'bg-indigo-600 text-white'
+                : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
             }`}
           >
-            <input
-              type="checkbox"
-              checked={enabled}
-              onChange={() => !isReviewing && toggleAgent(id)}
-              disabled={isReviewing}
-              className="mt-0.5 accent-indigo-500 flex-shrink-0"
-            />
-            <div className="flex flex-col gap-0.5 min-w-0">
-              <span className="text-sm text-gray-200">
-                {icon} {name}
-              </span>
-              <span className="text-xs text-gray-500">{desc}</span>
-            </div>
-          </label>
-        )
-      })}
-      {summaryDisabled && (
-        <p className="mt-1 text-xs text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded px-2.5 py-2">
-          ⚠ Summary agent disabled — issues will not be deduplicated across agents
+            Fast
+          </button>
+          <button
+            onClick={() => !isReviewing && setReviewMode('deep')}
+            disabled={isReviewing}
+            className={`flex-1 py-2 text-xs font-medium transition-colors border-l border-gray-700 ${
+              isReviewing ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+            } ${
+              reviewMode === 'deep'
+                ? 'bg-indigo-600 text-white'
+                : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
+            }`}
+          >
+            Deep
+          </button>
+        </div>
+        <p className="text-xs text-gray-600 leading-relaxed">
+          {reviewMode === 'fast'
+            ? 'Single unified pass — finds bugs, security, and performance issues together. Auto-escalates targeted agents for critical findings.'
+            : '3 specialized agents sequentially (bug → security → performance). More thorough, ~3× slower.'}
         </p>
+      </div>
+
+      {/* Deep-mode agent toggles (only relevant in deep mode) */}
+      {reviewMode === 'deep' && (
+        <div className="flex flex-col gap-1 border-t border-gray-800 pt-3">
+          <p className="text-xs text-gray-500 leading-relaxed mb-1">
+            Disabled agents are skipped, reducing inference time proportionally.
+          </p>
+          {AGENT_IDS.map((id) => {
+            const { name, icon, desc } = AGENT_LABELS[id]
+            const enabled = enabledAgents.has(id)
+            return (
+              <label
+                key={id}
+                className={`flex items-start gap-3 p-2.5 rounded cursor-pointer transition-colors ${
+                  isReviewing ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-800'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={enabled}
+                  onChange={() => !isReviewing && toggleAgent(id)}
+                  disabled={isReviewing}
+                  className="mt-0.5 accent-indigo-500 flex-shrink-0"
+                />
+                <div className="flex flex-col gap-0.5 min-w-0">
+                  <span className="text-sm text-gray-200">
+                    {icon} {name}
+                  </span>
+                  <span className="text-xs text-gray-500">{desc}</span>
+                </div>
+              </label>
+            )
+          })}
+        </div>
       )}
+
+      {/* Fast-mode info */}
+      {reviewMode === 'fast' && (
+        <div className="border-t border-gray-800 pt-3 flex flex-col gap-1.5 text-xs text-gray-500">
+          <p>Fast mode uses a single 🔎 Unified Reviewer agent.</p>
+          <p>If critical issues are found, targeted specialist agents run automatically on that chunk only.</p>
+        </div>
+      )}
+
       {isReviewing && (
-        <p className="mt-1 text-xs text-gray-600">Agent toggles disabled during active review</p>
+        <p className="text-xs text-gray-600">Settings locked during active review</p>
       )}
     </div>
   )

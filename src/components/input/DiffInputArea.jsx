@@ -5,6 +5,7 @@ import { MAX_FILE_SIZE_BYTES } from '../../config.js'
 import { isModelCached } from '../../lib/engine'
 import { getModelById } from '../../lib/models'
 import { useBreakpoint } from '../../hooks/useBreakpoint'
+import { deserializeReviewFile } from '../../lib/reviewFile'
 import ModelSelector from '../model/ModelSelector'
 import ProgressBar from '../model/ProgressBar'
 import HeroSection from '../layout/HeroSection'
@@ -36,7 +37,8 @@ export default function DiffInputArea() {
   const [error, setError] = useState('')
   const [dragging, setDragging] = useState(false)
   const [savedReview, setSavedReview] = useState(() => loadSavedReview())
-  const textareaRef = useRef(null)
+  const textareaRef  = useRef(null)
+  const importInputRef = useRef(null)
   const { isMobile } = useBreakpoint()
 
   const setDiff = useStore((s) => s.setDiff)
@@ -91,7 +93,7 @@ export default function DiffInputArea() {
     textareaRef.current?.focus()
   }
 
-  function handleReview() {
+  async function handleReview() {
     const trimmed = text.trim()
     if (!trimmed) return
     if (!isValidDiff(trimmed)) {
@@ -100,7 +102,7 @@ export default function DiffInputArea() {
     }
     setError('')
     setDiff(trimmed)
-    try { parseDiff() }
+    try { await parseDiff() }
     catch { setError('Failed to parse diff. Make sure it is a valid unified diff.') }
   }
 
@@ -115,17 +117,52 @@ export default function DiffInputArea() {
     reader.readAsText(file)
   }
 
+  function readReviewFile(file) {
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      setError(`File is too large (max ${MAX_FILE_SIZE_BYTES / 1024 / 1024} MB).`)
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const result = deserializeReviewFile(e.target.result)
+      if (!result.ok) {
+        setError(result.error)
+        return
+      }
+      setError('')
+      restoreReview({
+        rawDiff:     result.data.rawDiff,
+        files:       result.data.files,
+        diffReview:  result.data.diffReview,
+        fileReviews: result.data.fileReviews,
+        annotations: result.data.annotations,
+        importMeta: result.data.meta,
+      })
+    }
+    reader.onerror = () => setError('Failed to read .review file. Please try again.')
+    reader.readAsText(file)
+  }
+
   function handleDrop(e) {
     e.preventDefault()
     setDragging(false)
     const file = e.dataTransfer.files[0]
     if (!file) return
     const name = file.name.toLowerCase()
-    if (name.endsWith('.diff') || name.endsWith('.patch') || file.type === 'text/plain') {
+    if (name.endsWith('.review')) {
+      readReviewFile(file)
+    } else if (name.endsWith('.diff') || name.endsWith('.patch') || file.type === 'text/plain') {
       readFile(file)
     } else {
-      setError('Please drop a .diff or .patch file.')
+      setError('Please drop a .diff, .patch, or .review file.')
     }
+  }
+
+  function handleImportReviewFile(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    readReviewFile(file)
   }
 
   function handleDragOver(e) { e.preventDefault(); setDragging(true) }
@@ -282,7 +319,7 @@ export default function DiffInputArea() {
                   <path d="M10 3v10M6 9l4 4 4-4" stroke="#818cf8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
-              <p className="text-indigo-300 text-sm font-medium">Drop .diff or .patch file</p>
+              <p className="text-indigo-300 text-sm font-medium">Drop .diff, .patch, or .review file</p>
             </div>
           )}
         </div>
@@ -294,6 +331,20 @@ export default function DiffInputArea() {
 
       <p className="text-[11px] text-gray-600 px-1 leading-relaxed">
         After loading the diff you can choose which files to review and configure focus context, agent toggles, and issue filters via the <span className="text-gray-500">⚙</span> settings panel before starting.
+      </p>
+      <p className="text-[11px] text-gray-600 px-1">
+        Have a saved review?{' '}
+        <label className="text-indigo-400 hover:text-indigo-300 cursor-pointer transition-colors">
+          Import a .review file
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".review"
+            className="sr-only"
+            onChange={handleImportReviewFile}
+          />
+        </label>
+        {' '}to restore it instantly — no inference needed.
       </p>
 
       <div className="flex items-center justify-between gap-3">

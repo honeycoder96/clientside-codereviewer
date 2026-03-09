@@ -25,15 +25,14 @@ Prior findings:
 {prior_findings}
 ` + SHARED_JSON_FORMAT
 
-export const SUMMARY_AGENT_PROMPT =
-  `You are a Summary Agent. You receive a code diff and findings from 3 specialist reviewers.
-Your job: write a 1-2 sentence summary of this chunk's purpose and quality, deduplicate any overlapping issues, and return the final merged issue list.
-Bug findings:
-{bug_findings}
-Security findings:
-{security_findings}
-Performance findings:
-{performance_findings}
+export const UNIFIED_AGENT_PROMPT =
+  `You are a code reviewer. Analyze this diff for bugs, security vulnerabilities, and performance issues in a single pass.
+For each issue, tag it with the correct category:
+- "bug": logic errors, null/undefined access, off-by-one errors, missing error handling, race conditions, type mismatches
+- "security": XSS, SQL/command injection, eval(), prototype pollution, hardcoded secrets, path traversal, missing auth checks
+- "performance": N+1 queries, unbounded loops, missing memoization, memory leaks, synchronous blocking calls
+- "style" or "logic": for anything that doesn't fit the above
+Report each issue once under its most relevant category. Do not duplicate the same issue under multiple categories.
 ` + SHARED_JSON_FORMAT
 
 export const COMMIT_MESSAGE_PROMPT =
@@ -68,7 +67,8 @@ ${chunk.content}`
 }
 
 /**
- * Serializes prior AgentResults into readable text for agent memory injection.
+ * Serializes prior AgentResults into compact readable text for agent memory injection.
+ * Compact format reduces prior-context token cost vs full JSON serialization.
  */
 export function formatPriorFindings(agentResults) {
   if (!agentResults || agentResults.length === 0) return 'None'

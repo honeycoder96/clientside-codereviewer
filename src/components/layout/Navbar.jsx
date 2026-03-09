@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useStore } from '../../store/useStore'
 import { getModelById } from '../../lib/models'
 import ModelSwitchDialog from '../model/ModelSwitchDialog'
+import InstallButton from './InstallButton'
 
 const GITHUB_URL = 'https://github.com/honeycoder96/clientside-codereviewer'
 
@@ -63,6 +64,8 @@ export default function Navbar() {
           {model.name}
           {canSwitch && <span className="text-gray-700">↕</span>}
         </button>
+
+        <InstallButton />
 
         {/* GitHub link */}
         <a

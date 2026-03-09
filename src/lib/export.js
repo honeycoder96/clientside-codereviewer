@@ -227,6 +227,254 @@ export function toCSV(fileReviews) {
 }
 
 // ---------------------------------------------------------------------------
+// toSARIF
+// ---------------------------------------------------------------------------
+
+/**
+ * SARIF 2.1.0 — GitHub Code Scanning compatible.
+ *
+ * Upload the output file to GitHub via:
+ *   gh code-scanning upload-results --sarif <file>.sarif
+ * or the GitHub REST API:
+ *   POST /repos/{owner}/{repo}/code-scanning/sarifs
+ *
+ * Spec: https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/sarif-support-for-code-scanning
+ *
+ * @param {Map<string,object>}  fileReviews
+ * @returns {string}            minified JSON with .sarif extension
+ */
+export function toSARIF(fileReviews) {
+  // ── Rule definitions (one per category) ────────────────────────────────
+  const RULES = {
+    bug: {
+      id:   'WGPU-BUG',
+      name: 'BugDetection',
+      shortDescription: { text: 'Bug or correctness issue' },
+      fullDescription:  { text: 'A potential bug, logic error, or correctness problem detected in the changed code.' },
+      helpUri: 'https://github.com/honeycoder96/clientside-codereviewer',
+      properties: { tags: ['correctness'] },
+    },
+    security: {
+      id:   'WGPU-SEC',
+      name: 'SecurityVulnerability',
+      shortDescription: { text: 'Security vulnerability' },
+      fullDescription:  { text: 'A security vulnerability or unsafe practice detected in the changed code.' },
+      helpUri: 'https://github.com/honeycoder96/clientside-codereviewer',
+      properties: { tags: ['security'] },
+    },
+    performance: {
+      id:   'WGPU-PERF',
+      name: 'PerformanceIssue',
+      shortDescription: { text: 'Performance issue' },
+      fullDescription:  { text: 'A performance problem or inefficiency detected in the changed code.' },
+      helpUri: 'https://github.com/honeycoder96/clientside-codereviewer',
+      properties: { tags: ['performance'] },
+    },
+  }
+
+  const LEVEL = { critical: 'error', warning: 'warning', info: 'note' }
+
+  // ── Build results ────────────────────────────────────────────────────────
+  const results      = []
+  const usedRuleIds  = new Set()
+
+  for (const fr of sortedFileReviews(fileReviews)) {
+    // Normalise the URI: strip leading slash, strip git a/ b/ prefixes that
+    // some diff parsers leave in, ensure forward slashes (SARIF requires it).
+    const uri = fr.filename
+      .replace(/^\//, '')
+      .replace(/^[ab]\//, '')
+      .replace(/\\/g, '/')
+
+    for (const issue of sortedIssues(fr.mergedIssues)) {
+      const category = issue.category ?? 'bug'
+      const rule     = RULES[category] ?? RULES.bug
+      usedRuleIds.add(rule.id)
+
+      // Compose message — append suggestion as a second paragraph if present.
+      let messageText = issue.message ?? ''
+      if (issue.suggestion) {
+        messageText += `\n\nSuggestion: ${issue.suggestion}`
+      }
+
+      const result = {
+        ruleId:  rule.id,
+        level:   LEVEL[issue.severity] ?? 'note',
+        message: { text: messageText },
+        locations: [
+          {
+            physicalLocation: {
+              artifactLocation: {
+                uri,
+                uriBaseId: '%SRCROOT%',
+              },
+              region: {
+                startLine: Math.max(1, issue.line ?? 1),
+              },
+            },
+          },
+        ],
+      }
+
+      // Attach `foundBy` as a property bag — surfaced in GitHub's SARIF viewer.
+      if (issue.foundBy) {
+        result.properties = { foundBy: issue.foundBy }
+      }
+
+      results.push(result)
+    }
+  }
+
+  // ── Emit only rules that produced at least one result ───────────────────
+  const rules = Object.values(RULES).filter((r) => usedRuleIds.has(r.id))
+
+  // ── Assemble SARIF document ──────────────────────────────────────────────
+  const sarif = {
+    $schema: 'https://json.schemastore.org/sarif-2.1.0.json',
+    version: '2.1.0',
+    runs: [
+      {
+        tool: {
+          driver: {
+            name:           'WebGPU Code Reviewer',
+            version:        '1.0.0',
+            informationUri: 'https://github.com/honeycoder96/clientside-codereviewer',
+            rules,
+          },
+        },
+        results,
+        // Declare the repository root so GitHub can resolve relative URIs.
+        originalUriBaseIds: {
+          '%SRCROOT%': { uri: 'file:///' },
+        },
+      },
+    ],
+  }
+
+  return JSON.stringify(sarif, null, 2)
+}
+
+// ---------------------------------------------------------------------------
+// toPRDescription
+// ---------------------------------------------------------------------------
+
+/**
+ * Generates a pull-request description from the review results.
+ * Pure computation — no LLM calls, uses the already-generated review data.
+ *
+ * @param {object}              diffReview
+ * @param {Map<string,object>}  fileReviews
+ * @param {object[]}            files       — FileDiff[] with .additions/.deletions
+ * @returns {string}            Markdown-formatted PR description
+ */
+export function toPRDescription(diffReview, fileReviews, files) {
+  const { overallRisk, totalIssues, commitMessage, suggestedTests } = diffReview
+  const { label: riskLbl } = riskLabel(overallRisk)
+
+  const sorted     = sortedFileReviews(fileReviews)
+  const fileMeta   = new Map(files.map((f) => [f.filename, f]))
+  const totalAdded = files.reduce((s, f) => s + (f.additions ?? 0), 0)
+  const totalDel   = files.reduce((s, f) => s + (f.deletions ?? 0), 0)
+
+  const lines = []
+
+  // ── Summary ──────────────────────────────────────────────────────────────
+  lines.push('## Summary')
+  lines.push('')
+  if (commitMessage) {
+    // Use the first line of the commit message as the PR intro sentence
+    const firstLine = commitMessage.split('\n')[0].replace(/^(feat|fix|chore|refactor|style|test|docs|perf|ci)[:(].*?[):]\s*/i, '')
+    lines.push(firstLine)
+    lines.push('')
+  }
+
+  // Change stats line
+  const fileWord = files.length === 1 ? 'file' : 'files'
+  lines.push(`**${files.length} ${fileWord} changed** · +${totalAdded} / −${totalDel} lines · Risk: **${overallRisk} — ${riskLbl}**`)
+  lines.push('')
+
+  // ── What changed ─────────────────────────────────────────────────────────
+  lines.push('## Changes')
+  lines.push('')
+
+  for (const fr of sorted) {
+    const meta     = fileMeta.get(fr.filename)
+    const basename = fr.filename.split('/').pop()
+    const status   = meta?.status === 'added' ? ' *(new)*' : meta?.status === 'deleted' ? ' *(deleted)*' : ''
+    const chunks   = fr.chunks ?? []
+    // Collect all non-empty per-chunk summaries as bullet sub-points
+    const summaries = chunks.map((c) => c.summary).filter(Boolean)
+
+    if (summaries.length > 0) {
+      lines.push(`- **\`${basename}\`**${status}`)
+      summaries.forEach((s) => lines.push(`  - ${s}`))
+    } else {
+      const issueNote = fr.mergedIssues.length > 0
+        ? ` — ${fr.mergedIssues.length} issue${fr.mergedIssues.length !== 1 ? 's' : ''}`
+        : ''
+      lines.push(`- **\`${basename}\`**${status}${issueNote}`)
+    }
+  }
+  lines.push('')
+
+  // ── Issues found ─────────────────────────────────────────────────────────
+  const hasIssues = (totalIssues.critical + totalIssues.warning + totalIssues.info) > 0
+  if (hasIssues) {
+    lines.push('## Issues Found')
+    lines.push('')
+    const criticalIssues = sorted.flatMap((fr) =>
+      fr.mergedIssues
+        .filter((i) => i.severity === 'critical')
+        .map((i) => ({ ...i, _file: fr.filename }))
+    )
+    const warningIssues = sorted.flatMap((fr) =>
+      fr.mergedIssues
+        .filter((i) => i.severity === 'warning')
+        .map((i) => ({ ...i, _file: fr.filename }))
+    )
+
+    if (criticalIssues.length > 0) {
+      lines.push(`### 🔴 Critical (${criticalIssues.length})`)
+      lines.push('')
+      criticalIssues.slice(0, 5).forEach((i) => {
+        lines.push(`- **\`${i._file.split('/').pop()}\` line ${i.line}** — ${i.message}`)
+      })
+      if (criticalIssues.length > 5) lines.push(`- … and ${criticalIssues.length - 5} more`)
+      lines.push('')
+    }
+
+    if (warningIssues.length > 0) {
+      lines.push(`### ⚠ Warnings (${warningIssues.length})`)
+      lines.push('')
+      warningIssues.slice(0, 5).forEach((i) => {
+        lines.push(`- **\`${i._file.split('/').pop()}\` line ${i.line}** — ${i.message}`)
+      })
+      if (warningIssues.length > 5) lines.push(`- … and ${warningIssues.length - 5} more`)
+      lines.push('')
+    }
+  } else {
+    lines.push('## Issues Found')
+    lines.push('')
+    lines.push('✅ No issues detected by automated review.')
+    lines.push('')
+  }
+
+  // ── Test plan ─────────────────────────────────────────────────────────────
+  if (suggestedTests?.length > 0) {
+    lines.push('## Test Plan')
+    lines.push('')
+    suggestedTests.forEach((t) => lines.push(`- [ ] ${t}`))
+    lines.push('')
+  }
+
+  // ── Footer ────────────────────────────────────────────────────────────────
+  lines.push('---')
+  lines.push('*Generated by [WebGPU Code Reviewer](https://github.com/honeycoder96/clientside-codereviewer) — fully client-side AI review, no data sent to any server.*')
+
+  return lines.join('\n')
+}
+
+// ---------------------------------------------------------------------------
 // toJSON
 // ---------------------------------------------------------------------------
 

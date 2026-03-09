@@ -1,27 +1,28 @@
 import { useStore } from '../../store/useStore'
-import { AGENTS } from '../../lib/agents'
 import AgentStatusRow from './AgentStatusRow'
 import StreamingText from '../ui/StreamingText'
 
+// Label/icon registry for all possible agent IDs (unified + deep-mode agents)
+const AGENT_META = {
+  unified:     { name: 'Unified Reviewer',      icon: '🔎' },
+  bug:         { name: 'Bug Reviewer',           icon: '🔍' },
+  security:    { name: 'Security Auditor',       icon: '🔒' },
+  performance: { name: 'Performance Reviewer',   icon: '⚡' },
+}
+
 export default function AgentProgress() {
-  const reviewStatus = useStore((s) => s.reviewStatus)
-  const agentStatuses = useStore((s) => s.agentStatuses)
-  const fileStatuses = useStore((s) => s.fileStatuses)
-  const files = useStore((s) => s.files)
+  const reviewStatus    = useStore((s) => s.reviewStatus)
+  const agentStatuses   = useStore((s) => s.agentStatuses)
+  const fileStatuses    = useStore((s) => s.fileStatuses)
+  const files           = useStore((s) => s.files)
   const tokensPerSecond = useStore((s) => s.tokensPerSecond)
-  const cancelReview = useStore((s) => s.cancelReview)
-  const fileReviews = useStore((s) => s.fileReviews)
+  const cancelReview    = useStore((s) => s.cancelReview)
+  const fileReviews     = useStore((s) => s.fileReviews)
 
-  const totalFiles = files.length
-  const completedFiles = [...fileStatuses.values()].filter((s) => s === 'done').length
-  const reviewingFile = [...fileStatuses.entries()].find(([, s]) => s === 'reviewing')?.[0]
-  const reviewingFilename = reviewingFile
-    ? reviewingFile.split('/').pop()
-    : null
-
-  function handleCancel() {
-    cancelReview()
-  }
+  const totalFiles      = files.length
+  const completedFiles  = [...fileStatuses.values()].filter((s) => s === 'done').length
+  const reviewingFile   = [...fileStatuses.entries()].find(([, s]) => s === 'reviewing')?.[0]
+  const reviewingFilename = reviewingFile ? reviewingFile.split('/').pop() : null
 
   // Collapsed summary bar when done
   if (reviewStatus === 'done') {
@@ -35,6 +36,21 @@ export default function AgentProgress() {
       </div>
     )
   }
+
+  // Render agent rows dynamically from agentStatuses — works for fast, deep, and escalation
+  const agentRows = [...agentStatuses.entries()]
+    .map(([agentId, status]) => {
+      const meta = AGENT_META[agentId]
+      if (!meta) return null
+      return (
+        <AgentStatusRow
+          key={agentId}
+          agent={{ id: agentId, ...meta }}
+          status={status}
+        />
+      )
+    })
+    .filter(Boolean)
 
   return (
     <div className="flex flex-col gap-2 p-3 border-b border-gray-700 bg-gray-850">
@@ -55,22 +71,16 @@ export default function AgentProgress() {
           )}
         </div>
         <button
-          onClick={handleCancel}
+          onClick={cancelReview}
           className="text-xs px-2 py-1 text-gray-500 hover:text-red-400 border border-gray-700 hover:border-red-800 rounded transition-colors"
         >
           Cancel
         </button>
       </div>
 
-      {/* Agent rows */}
+      {/* Agent rows — dynamic: unified in fast mode, bug/security/perf in deep mode */}
       <div className="flex flex-col">
-        {AGENTS.map((agent) => (
-          <AgentStatusRow
-            key={agent.id}
-            agent={agent}
-            status={agentStatuses.get(agent.id)}
-          />
-        ))}
+        {agentRows}
       </div>
 
       {/* Live streaming output */}

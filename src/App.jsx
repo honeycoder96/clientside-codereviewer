@@ -2,6 +2,7 @@ import { Component } from 'react'
 import ReviewDashboard from './components/ReviewDashboard'
 import NoWebGPU from './components/model/NoWebGPU'
 import Navbar from './components/layout/Navbar'
+import CommandPalette from './components/CommandPalette'
 
 const gpuSupported = typeof navigator !== 'undefined' && !!navigator.gpu
 
@@ -53,6 +54,7 @@ export default function Root() {
         <div className="flex-1 overflow-hidden">
           <App />
         </div>
+        <CommandPalette />
       </div>
     </ErrorBoundary>
   )

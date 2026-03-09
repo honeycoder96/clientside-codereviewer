@@ -1,4 +1,4 @@
-import { TARGET_TOKENS, MAX_TOKENS } from '../config.js'
+import { TARGET_TOKENS, MAX_TOKENS, MIN_REVIEW_TOKENS } from '../config.js'
 
 export function estimateTokens(text) {
   return Math.ceil(text.length / 4)
@@ -92,5 +92,5 @@ export function chunkFile(fileDiff) {
     }
   })
 
-  return chunks.filter((c) => c.tokenCount > 0)
+  return chunks.filter((c) => c.tokenCount >= MIN_REVIEW_TOKENS)
 }
