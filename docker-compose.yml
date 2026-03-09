@@ -1,0 +1,8 @@
+services:
+  webgpu-llm-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: honeycoder96/webgpu-llm:latest
+    container_name: webgpu-llm-app
+    restart: unless-stopped
