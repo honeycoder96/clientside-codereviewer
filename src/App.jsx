@@ -1,6 +1,4 @@
 import { Component } from 'react'
-import { useStore } from './store/useStore'
-import ModelLoader from './components/model/ModelLoader'
 import ReviewDashboard from './components/ReviewDashboard'
 import NoWebGPU from './components/model/NoWebGPU'
 import Navbar from './components/layout/Navbar'
@@ -43,9 +41,7 @@ class ErrorBoundary extends Component {
 }
 
 function App() {
-  const engineStatus = useStore((s) => s.engineStatus)
   if (!gpuSupported) return <NoWebGPU />
-  if (engineStatus !== 'ready') return <ModelLoader />
   return <ReviewDashboard />
 }
 
