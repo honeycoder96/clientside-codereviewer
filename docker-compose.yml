@@ -6,3 +6,9 @@ services:
     image: honeycoder96/webgpu-llm:latest
     container_name: webgpu-llm-app
     restart: unless-stopped
+    networks:
+      - dokploy-network
+
+networks:
+  dokploy-network:
+    external: true
