@@ -1,0 +1,98 @@
+/* react-diff-view dark theme — overrides via CSS custom properties */
+:root {
+  --diff-background-color: #111827;       /* gray-900 */
+  --diff-text-color: #d1d5db;             /* gray-300 */
+  --diff-font-family: 'Fira Code', 'Cascadia Code', Consolas, 'Courier New', monospace;
+
+  /* insert (addition) */
+  --diff-gutter-insert-background-color: #052e16;   /* green-950 */
+  --diff-gutter-insert-text-color: #4ade80;          /* green-400 */
+  --diff-code-insert-background-color: #052e16;
+  --diff-code-insert-text-color: #d1d5db;
+
+  /* delete */
+  --diff-gutter-delete-background-color: #450a0a;   /* red-950 */
+  --diff-gutter-delete-text-color: #f87171;          /* red-400 */
+  --diff-code-delete-background-color: #450a0a;
+  --diff-code-delete-text-color: #d1d5db;
+
+  /* selected */
+  --diff-gutter-selected-background-color: #1e1b4b; /* indigo-950 */
+  --diff-code-selected-background-color: #1e1b4b;
+
+  /* word-level edit highlights */
+  --diff-code-insert-edit-background-color: #166534; /* green-800 */
+  --diff-code-delete-edit-background-color: #991b1b; /* red-800 */
+
+  /* omit divider */
+  --diff-omit-gutter-line-color: #4f46e5;           /* indigo-600 */
+}
+
+/* Base table */
+.diff {
+  font-size: 13px;
+  line-height: 1.6;
+  width: 100%;
+}
+
+/* Gutter (line numbers) */
+.diff-gutter {
+  width: 5ch;
+  min-width: 5ch;
+  color: #6b7280; /* gray-500 */
+  background-color: #111827;
+  padding: 0 8px;
+  text-align: right;
+  user-select: none;
+  vertical-align: top;
+}
+
+.diff-gutter-insert {
+  background-color: var(--diff-gutter-insert-background-color);
+  color: var(--diff-gutter-insert-text-color);
+}
+
+.diff-gutter-delete {
+  background-color: var(--diff-gutter-delete-background-color);
+  color: var(--diff-gutter-delete-text-color);
+}
+
+/* Code content cells */
+.diff-code {
+  padding: 0 0 0 12px;
+  white-space: pre;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #d1d5db; /* gray-300 — force light text for normal/context lines */
+}
+
+.diff-code-insert {
+  color: var(--diff-code-insert-text-color, #d1d5db);
+}
+
+.diff-code-delete {
+  color: var(--diff-code-delete-text-color, #d1d5db);
+}
+
+/* Hunk decoration header (@@ ... @@) */
+.diff-decoration-content {
+  background-color: #1f2937;  /* gray-800 */
+  color: #818cf8;             /* indigo-400 */
+  font-style: italic;
+  font-size: 12px;
+  padding: 3px 12px;
+  display: block;
+  user-select: none;
+  border-top: 1px solid #374151;    /* gray-700 */
+  border-bottom: 1px solid #374151;
+}
+
+/* Unified diff gutter column width */
+.diff-gutter-col {
+  width: 6ch;
+}
+
+/* Omit block divider */
+.diff-gutter-omit:before {
+  background-color: var(--diff-omit-gutter-line-color);
+}

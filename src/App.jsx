@@ -1,0 +1,57 @@
+import { Component } from 'react'
+import { useStore } from './store/useStore'
+import ModelLoader from './components/model/ModelLoader'
+import ReviewDashboard from './components/ReviewDashboard'
+import NoWebGPU from './components/model/NoWebGPU'
+
+const gpuSupported = typeof navigator !== 'undefined' && !!navigator.gpu
+
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false, message: '' }
+  }
+
+  static getDerivedStateFromError(err) {
+    return { hasError: true, message: err?.message ?? 'Unknown error' }
+  }
+
+  componentDidCatch(err, info) {
+    console.error('[ErrorBoundary]', err, info)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-gray-900 flex items-center justify-center p-6">
+          <div className="max-w-md text-center flex flex-col gap-4">
+            <p className="text-red-400 font-semibold">Something went wrong</p>
+            <p className="text-gray-400 text-sm">{this.state.message}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors"
+            >
+              Reload
+            </button>
+          </div>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
+function App() {
+  const engineStatus = useStore((s) => s.engineStatus)
+  if (!gpuSupported) return <NoWebGPU />
+  if (engineStatus !== 'ready') return <ModelLoader />
+  return <ReviewDashboard />
+}
+
+export default function Root() {
+  return (
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  )
+}
