@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useStore } from '../../store/useStore'
 import { AGENT_IDS } from '../../lib/agents'
+import { BUILTIN_PROFILES } from '../../lib/profiles'
+import { triggerDownload } from '../../lib/export'
 
 const AGENT_LABELS = {
   bug:         { name: 'Bug Reviewer',         icon: '🔍', desc: 'Logic errors, null checks, edge cases' },
@@ -195,6 +197,140 @@ function FiltersTab() {
   )
 }
 
+function ProfilesTab() {
+  const userProfiles         = useStore((s) => s.userProfiles)
+  const applyProfile         = useStore((s) => s.applyProfile)
+  const saveCurrentAsProfile = useStore((s) => s.saveCurrentAsProfile)
+  const deleteUserProfile    = useStore((s) => s.deleteUserProfile)
+  const importUserProfiles   = useStore((s) => s.importUserProfiles)
+  const exportUserProfiles   = useStore((s) => s.exportUserProfiles)
+  const isReviewing          = useStore((s) => s.reviewStatus === 'reviewing')
+
+  const [newName, setNewName]       = useState('')
+  const [saveStatus, setSaveStatus] = useState(null) // 'ok' | 'error'
+  const fileInputRef                = useRef(null)
+
+  function handleSave() {
+    if (!newName.trim()) return
+    const ok = saveCurrentAsProfile(newName)
+    setSaveStatus(ok ? 'ok' : 'error')
+    if (ok) setNewName('')
+    setTimeout(() => setSaveStatus(null), 2000)
+  }
+
+  function handleImport(e) {
+    const file = e.target.files[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      importUserProfiles(ev.target.result)
+      e.target.value = ''
+    }
+    reader.readAsText(file)
+  }
+
+  function handleExport() {
+    triggerDownload('profiles.json', exportUserProfiles(), 'application/json')
+  }
+
+  const ProfileRow = ({ profile, showDelete }) => (
+    <div className="flex items-center gap-2 p-2 rounded hover:bg-gray-800">
+      <span className="text-base leading-none">{profile.icon}</span>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm text-gray-200 truncate">{profile.name}</p>
+        {profile.description && (
+          <p className="text-xs text-gray-500 truncate">{profile.description}</p>
+        )}
+      </div>
+      <button
+        onClick={() => !isReviewing && applyProfile(profile.id)}
+        disabled={isReviewing}
+        className="text-xs px-2 py-1 border border-gray-600 hover:border-indigo-500 hover:text-indigo-400 text-gray-400 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+      >
+        Apply
+      </button>
+      {showDelete && (
+        <button
+          onClick={() => deleteUserProfile(profile.id)}
+          className="text-gray-600 hover:text-red-400 transition-colors text-xs leading-none flex-shrink-0"
+          title="Delete profile"
+        >
+          ✕
+        </button>
+      )}
+    </div>
+  )
+
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-xs text-gray-500 leading-relaxed">
+        Profiles atomically apply focus context, review mode, agents, and filters.
+      </p>
+
+      {/* Built-in profiles */}
+      <div className="flex flex-col gap-0.5">
+        <p className="text-xs text-gray-400 font-medium mb-1">Built-in</p>
+        {BUILTIN_PROFILES.map((p) => <ProfileRow key={p.id} profile={p} showDelete={false} />)}
+      </div>
+
+      {/* User profiles */}
+      {userProfiles.length > 0 && (
+        <div className="flex flex-col gap-0.5 border-t border-gray-800 pt-3">
+          <p className="text-xs text-gray-400 font-medium mb-1">Saved</p>
+          {userProfiles.map((p) => <ProfileRow key={p.id} profile={p} showDelete={true} />)}
+        </div>
+      )}
+
+      {/* Save current as profile */}
+      <div className="flex flex-col gap-2 border-t border-gray-800 pt-3">
+        <p className="text-xs text-gray-400 font-medium">Save current settings</p>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+            placeholder="Profile name"
+            className="flex-1 bg-gray-800 border border-gray-700 rounded text-sm text-gray-200 px-2.5 py-1.5 focus:outline-none focus:border-indigo-500 placeholder:text-gray-600 transition-colors"
+          />
+          <button
+            onClick={handleSave}
+            disabled={!newName.trim()}
+            className="text-xs px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Save
+          </button>
+        </div>
+        {saveStatus === 'ok'    && <p className="text-xs text-green-400">✓ Profile saved</p>}
+        {saveStatus === 'error' && <p className="text-xs text-red-400">Failed to save</p>}
+      </div>
+
+      {/* Import / Export */}
+      <div className="flex gap-2 border-t border-gray-800 pt-3">
+        {userProfiles.length > 0 && (
+          <button
+            onClick={handleExport}
+            className="flex-1 text-xs py-1.5 border border-gray-600 hover:border-gray-400 text-gray-400 hover:text-white rounded transition-colors"
+          >
+            Export JSON
+          </button>
+        )}
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="flex-1 text-xs py-1.5 border border-gray-600 hover:border-gray-400 text-gray-400 hover:text-white rounded transition-colors"
+        >
+          Import JSON
+        </button>
+        <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
+      </div>
+
+      {isReviewing && (
+        <p className="text-xs text-gray-600">Profile apply locked during active review</p>
+      )}
+    </div>
+  )
+}
+
 export default function SettingsPanel() {
   const settingsOpen    = useStore((s) => s.settingsOpen)
   const setSettingsOpen = useStore((s) => s.setSettingsOpen)
@@ -216,9 +352,10 @@ export default function SettingsPanel() {
   if (!settingsOpen) return null
 
   const TABS = [
-    { id: 'focus',   label: 'Focus' },
-    { id: 'agents',  label: 'Agents' },
-    { id: 'filters', label: 'Filters' },
+    { id: 'focus',    label: 'Focus' },
+    { id: 'agents',   label: 'Agents' },
+    { id: 'filters',  label: 'Filters' },
+    { id: 'profiles', label: 'Profiles' },
   ]
 
   return (
@@ -264,9 +401,10 @@ export default function SettingsPanel() {
 
         {/* Tab content */}
         <div className="flex-1 overflow-y-auto p-4">
-          {activeTab === 'focus'   && <FocusTab />}
-          {activeTab === 'agents'  && <AgentsTab />}
-          {activeTab === 'filters' && <FiltersTab />}
+          {activeTab === 'focus'    && <FocusTab />}
+          {activeTab === 'agents'   && <AgentsTab />}
+          {activeTab === 'filters'  && <FiltersTab />}
+          {activeTab === 'profiles' && <ProfilesTab />}
         </div>
 
         {/* Footer */}

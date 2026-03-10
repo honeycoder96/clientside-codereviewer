@@ -5,6 +5,7 @@ import SecurityFindings from './SecurityFindings'
 import FileReviewList from './FileReviewList'
 import SuggestedTests from './SuggestedTests'
 import CommitMessage from './CommitMessage'
+import HistoryPanel from './HistoryPanel'
 
 const TABS = [
   { id: 'summary',  label: 'Summary',  alwaysEnabled: true },
@@ -12,9 +13,10 @@ const TABS = [
   { id: 'security', label: 'Security', alwaysEnabled: true },
   { id: 'tests',    label: 'Tests',    alwaysEnabled: false },
   { id: 'commit',   label: 'Commit',   alwaysEnabled: false },
+  { id: 'history',  label: 'History',  alwaysEnabled: true },
 ]
 
-function TabBar({ tab, setTab, reviewStatus, securityCount }) {
+function TabBar({ tab, setTab, reviewStatus, securityCount, historyCount }) {
   const isDone = reviewStatus === 'done'
   return (
     <div className="flex border-b border-gray-700 flex-shrink-0 overflow-x-auto">
@@ -38,6 +40,9 @@ function TabBar({ tab, setTab, reviewStatus, securityCount }) {
             {id === 'security' && securityCount > 0 && (
               <span className="ml-1 text-xs text-red-400 font-mono">{securityCount}</span>
             )}
+            {id === 'history' && historyCount > 0 && (
+              <span className="ml-1 text-xs text-gray-500 font-mono">{historyCount}</span>
+            )}
           </button>
         )
       })}
@@ -46,10 +51,11 @@ function TabBar({ tab, setTab, reviewStatus, securityCount }) {
 }
 
 export default function RightPanel() {
-  const reviewStatus = useStore((s) => s.reviewStatus)
-  const rightPanelTab = useStore((s) => s.rightPanelTab)
-  const setTab = useStore((s) => s.setTab)
-  const fileReviews = useStore((s) => s.fileReviews)
+  const reviewStatus   = useStore((s) => s.reviewStatus)
+  const rightPanelTab  = useStore((s) => s.rightPanelTab)
+  const setTab         = useStore((s) => s.setTab)
+  const fileReviews    = useStore((s) => s.fileReviews)
+  const historyCount   = useStore((s) => s.historyEntries.length)
 
   const securityCount = [...fileReviews.values()]
     .flatMap((fr) => fr.mergedIssues)
@@ -68,6 +74,7 @@ export default function RightPanel() {
         setTab={setTab}
         reviewStatus={reviewStatus}
         securityCount={securityCount}
+        historyCount={historyCount}
       />
 
       {/* Tab content */}
@@ -77,6 +84,7 @@ export default function RightPanel() {
         {rightPanelTab === 'security' && <SecurityFindings />}
         {rightPanelTab === 'tests'    && <SuggestedTests />}
         {rightPanelTab === 'commit'   && <CommitMessage />}
+        {rightPanelTab === 'history'  && <HistoryPanel />}
       </div>
     </div>
   )

@@ -3,6 +3,7 @@ import { useStore } from '../store/useStore'
 import { toMarkdown, toCSV, toJSON, toSARIF, triggerDownload } from '../lib/export'
 import { serializeReviewFile } from '../lib/reviewFile'
 import { MODELS } from '../lib/models'
+import { BUILTIN_PROFILES } from '../lib/profiles'
 
 function isoDate() {
   return new Date().toISOString().slice(0, 10)
@@ -32,7 +33,8 @@ export function useCommandRegistry() {
   const setSettingsOpen = useStore((s) => s.setSettingsOpen)
   const setReviewMode   = useStore((s) => s.setReviewMode)
   const switchModel     = useStore((s) => s.switchModel)
-  const setIssueFilters = useStore((s) => s.setIssueFilters)
+  const applyProfile    = useStore((s) => s.applyProfile)
+  const userProfiles    = useStore((s) => s.userProfiles)
 
   const isDone      = reviewStatus === 'done' && !!diffReview
   const isReviewing = reviewStatus === 'reviewing'
@@ -93,52 +95,19 @@ export function useCommandRegistry() {
       })
     }
 
-    // ── Issue filters / presets ──────────────────────────────────────────────
-    cmds.push({
-      id: 'preset:security-audit',
-      section: 'Presets',
-      label: 'Apply Security Audit profile',
-      description: 'Focus on security issues, hide info-level noise',
-      icon: '🔒',
-      keywords: ['security', 'audit', 'preset', 'profile', 'vulnerabilities'],
-      available: true,
-      onSelect: () => {
-        setIssueFilters({ minSeverity: 'warning', categories: ['security'] })
-        setSettingsOpen(true)
-      },
-    })
-
-    cmds.push({
-      id: 'preset:critical-only',
-      section: 'Presets',
-      label: 'Show critical issues only',
-      icon: '🔴',
-      keywords: ['critical', 'severe', 'preset', 'filter', 'errors'],
-      available: true,
-      onSelect: () => setIssueFilters({ minSeverity: 'critical', categories: ['bug', 'security', 'performance'] }),
-    })
-
-    cmds.push({
-      id: 'preset:show-all',
-      section: 'Presets',
-      label: 'Show all issues',
-      description: 'Reset issue filters to show everything',
-      icon: '✦',
-      keywords: ['all', 'reset', 'filter', 'show', 'info', 'preset'],
-      available: true,
-      onSelect: () => setIssueFilters({ minSeverity: 'info', categories: ['bug', 'security', 'performance'] }),
-    })
-
-    cmds.push({
-      id: 'preset:performance',
-      section: 'Presets',
-      label: 'Apply Performance profile',
-      description: 'Show only performance issues',
-      icon: '⚡',
-      keywords: ['performance', 'speed', 'slow', 'preset', 'profile'],
-      available: true,
-      onSelect: () => setIssueFilters({ minSeverity: 'info', categories: ['performance'] }),
-    })
+    // ── Profiles ─────────────────────────────────────────────────────────────
+    for (const profile of [...BUILTIN_PROFILES, ...userProfiles]) {
+      cmds.push({
+        id: `profile:${profile.id}`,
+        section: 'Profiles',
+        label: `${profile.icon} ${profile.name}`,
+        description: profile.description,
+        icon: profile.icon,
+        keywords: ['profile', 'preset', 'apply', profile.name.toLowerCase()],
+        available: !isReviewing,
+        onSelect: () => applyProfile(profile.id),
+      })
+    }
 
     // ── View commands ────────────────────────────────────────────────────────
     cmds.push({
@@ -191,6 +160,17 @@ export function useCommandRegistry() {
       keywords: ['commit', 'message', 'tab', 'git'],
       available: true,
       onSelect: () => setTab('commit'),
+    })
+
+    cmds.push({
+      id: 'view:tab:history',
+      section: 'View',
+      label: 'Go to History tab',
+      description: 'Browse and restore past reviews',
+      icon: '⧗',
+      keywords: ['history', 'past', 'previous', 'restore', 'tab', 'review'],
+      available: true,
+      onSelect: () => setTab('history'),
     })
 
     // ── Export ───────────────────────────────────────────────────────────────
@@ -328,5 +308,6 @@ export function useCommandRegistry() {
   }, [
     files, reviewStatus, diffReview, fileReviews, rawDiff,
     selectedModel, reviewMode, diffViewMode, settingsOpen, isDone, isReviewing, hasFiles,
+    userProfiles,
   ])
 }

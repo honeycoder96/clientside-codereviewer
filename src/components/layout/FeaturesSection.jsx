@@ -80,6 +80,7 @@ const CATEGORIES = [
       { icon: '✅', title: 'Issue annotations', desc: 'Accept or dismiss individual findings — state persists across sessions.' },
       { icon: '🔧', title: 'LLM fix suggestions', desc: 'One-click streaming code fix generated on demand for any issue.' },
       { icon: '📝', title: 'PR description generator', desc: 'Auto-generates a structured pull-request body from the review results.' },
+      { icon: '📊', title: 'Issue trend delta', desc: 'After re-reviewing, see exactly which issues were introduced, resolved, or unchanged vs the previous run.' },
     ],
   },
   {
@@ -117,6 +118,9 @@ const CATEGORIES = [
       { icon: '📱', title: 'PWA / installable', desc: 'Install as a standalone desktop or mobile app from the browser.' },
       { icon: '📈', title: 'Diff statistics', desc: 'Churn analysis, blast-radius detection, coupling heatmap per directory.' },
       { icon: '🖥', title: 'Split-pane layout', desc: 'Resizable side-by-side diff viewer and review panel with keyboard nav.' },
+      { icon: '📚', title: 'Review history', desc: 'Every review is saved to IndexedDB automatically — browse, restore, and diff against past runs.' },
+      { icon: '🔖', title: 'Custom profiles', desc: 'Save and apply named review configurations covering mode, agents, focus context, and issue filters.' },
+      { icon: '⏱', title: 'Review queue', desc: 'Queue multiple diffs while a review is running — the next one starts automatically on completion.' },
     ],
   },
 ]
@@ -237,7 +241,7 @@ export default function FeaturesSection() {
             </span>
           </h2>
           <p className="text-sm text-gray-400 leading-relaxed">
-            30+ features across privacy, analysis depth, diff handling, review output, export formats and developer ergonomics —
+            35+ features across privacy, analysis depth, diff handling, review output, export formats and developer ergonomics —
             all running entirely in your browser with no server dependency.
           </p>
         </div>
@@ -322,7 +326,7 @@ export default function FeaturesSection() {
         >
           {[
             { value: '6',     label: 'Feature categories' },
-            { value: '30+',   label: 'Individual features' },
+            { value: '35+',   label: 'Individual features' },
             { value: '0 KB',  label: 'Server-side code' },
             { value: '100%',  label: 'Client-side inference' },
           ].map((stat) => (

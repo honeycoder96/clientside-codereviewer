@@ -51,6 +51,7 @@ export const STORAGE_KEYS = {
   ISSUE_FILTERS:   'wgpu_cr_issueFilters',
   REVIEW_MODE:     'wgpu_cr_reviewMode',
   DIFF_VIEW_MODE:  'wgpu_cr_diffViewMode',
+  PROFILES:        'wgpu_cr_profiles',
 }
 
 // Chunk result cache (sessionStorage — survives page reload, clears on tab close)

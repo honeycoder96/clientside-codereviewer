@@ -84,6 +84,7 @@ export default function ReviewSummary() {
   const reviewImportMeta  = useStore((s) => s.reviewImportMeta)
   const userAnnotations   = useStore((s) => s.userAnnotations)
   const clearAnnotations  = useStore((s) => s.clearAnnotations)
+  const issueDelta        = useStore((s) => s.issueDelta)
 
   // Memoize — fileReviews Map reference changes only when items are added
   const completedReviews = useMemo(() => [...fileReviews.values()], [fileReviews])
@@ -185,6 +186,23 @@ export default function ReviewSummary() {
           <span className="text-xs text-gray-500">Overall risk</span>
           <Badge risk={overallRisk} showDash />
         </div>
+
+        {/* Issue trend delta */}
+        {issueDelta && (
+          <div className="flex items-center gap-2.5 text-xs border border-gray-800 rounded px-2.5 py-1.5 bg-gray-900/60">
+            <span className="text-gray-600">vs prev</span>
+            {issueDelta.introduced.length > 0 && (
+              <span className="text-red-400 font-medium">+{issueDelta.introduced.length} introduced</span>
+            )}
+            {issueDelta.resolved.length > 0 && (
+              <span className="text-green-400 font-medium">−{issueDelta.resolved.length} resolved</span>
+            )}
+            {issueDelta.introduced.length === 0 && issueDelta.resolved.length === 0 && (
+              <span className="text-gray-500">No change</span>
+            )}
+            <span className="text-gray-700 ml-auto">={issueDelta.unchanged.length} unchanged</span>
+          </div>
+        )}
 
         {/* Issue counts */}
         <div className="flex items-center gap-3 text-xs">

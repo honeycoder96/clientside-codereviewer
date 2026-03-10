@@ -22,7 +22,7 @@ function sanitizeText(str) {
  * Extract and validate JSON from a raw LLM response.
  * Handles markdown fences and leading prose.
  */
-export function parseReviewResponse(text) {
+export function parseReviewResponse(text, { startLine, endLine } = {}) {
   // Strip markdown code fences
   let cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
 
@@ -41,7 +41,13 @@ export function parseReviewResponse(text) {
       .map((i) => ({
         severity: VALID_SEVERITIES.has(i.severity) ? i.severity : 'info',
         category: VALID_CATEGORIES.has(i.category) ? i.category : 'bug',
-        line: Math.max(0, Number(i.line) || 0),
+        line: (() => {
+          const raw = Math.max(0, Number(i.line) || 0)
+          if (startLine != null && endLine != null && endLine >= startLine) {
+            return Math.min(Math.max(raw, startLine), endLine)
+          }
+          return raw
+        })(),
         message: sanitizeText(String(i.message).slice(0, 500)),
         suggestion: i.suggestion ? sanitizeText(String(i.suggestion).slice(0, 500)) : null,
       }))

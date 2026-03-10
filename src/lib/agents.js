@@ -185,7 +185,10 @@ export async function runAgentOnChunk(engine, agent, chunk, priorResults = [], c
   const tps = durationMs > 0 ? Math.round((outputChunks / durationMs) * 1000) : 0
   callbacks.onTps?.(tps)
 
-  const { issues, summary } = parseReviewResponse(fullText)
+  const { issues, summary } = parseReviewResponse(fullText, {
+    startLine: chunk.startLine,
+    endLine: chunk.endLine,
+  })
 
   return {
     agentId: agent.id,

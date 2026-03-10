@@ -3,7 +3,7 @@ import FeaturesSection from './FeaturesSection'
 const FEATURES = [
     {
         label: '4 specialized agents',
-        sub: 'Security, logic bugs, test coverage & overall summary',
+        sub: 'Security, logic bugs, performance & overall summary — fast or deep mode',
     },
     {
         label: 'Zero data egress',
@@ -16,6 +16,22 @@ const FEATURES = [
     {
         label: 'Offline capable',
         sub: 'Works without internet once the model is downloaded',
+    },
+    {
+        label: 'Review history',
+        sub: 'Every run is saved locally — restore and compare past reviews instantly',
+    },
+    {
+        label: 'Issue trend delta',
+        sub: 'See which issues were introduced, resolved, or unchanged vs the last review',
+    },
+    {
+        label: 'Custom profiles',
+        sub: 'Save and apply review configurations — mode, agents, filters — as named presets',
+    },
+    {
+        label: 'Offline review queue',
+        sub: 'Queue multiple diffs; next review starts automatically when the current one finishes',
     },
 ]
 
