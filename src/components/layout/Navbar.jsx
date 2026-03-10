@@ -22,10 +22,10 @@ function GitHubIcon() {
 
 export default function Navbar() {
   const selectedModel = useStore((s) => s.selectedModel)
-  const engineStatus  = useStore((s) => s.engineStatus)
+  const engineStatus = useStore((s) => s.engineStatus)
   const [showDialog, setShowDialog] = useState(false)
 
-  const model     = getModelById(selectedModel)
+  const model = getModelById(selectedModel)
   const canSwitch = engineStatus !== 'loading'
 
   return (
@@ -47,37 +47,39 @@ export default function Navbar() {
           onClick={() => canSwitch && setShowDialog(true)}
           disabled={!canSwitch}
           title={canSwitch ? 'Switch model' : 'Cannot switch while model is loading'}
-          className={`flex items-center gap-1.5 text-[10px] font-mono px-2 py-1 rounded border transition-colors ${
-            canSwitch
-              ? 'border-gray-700 text-gray-500 hover:border-indigo-500 hover:text-indigo-300 cursor-pointer'
-              : 'border-gray-800 text-gray-700 cursor-not-allowed'
-          }`}
+          className={`flex items-center gap-1.5 text-[10px] font-mono px-2 py-1 rounded border transition-colors ${canSwitch
+            ? 'border-gray-700 text-gray-500 hover:border-indigo-500 hover:text-indigo-300 cursor-pointer'
+            : 'border-gray-800 text-gray-700 cursor-not-allowed'
+            }`}
         >
           <span
-            className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-              engineStatus === 'ready'   ? 'bg-green-500'  :
+            className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${engineStatus === 'ready' ? 'bg-green-500' :
               engineStatus === 'loading' ? 'bg-yellow-500' :
-              engineStatus === 'error'   ? 'bg-red-500'    :
-              'bg-gray-600'
-            }`}
+                engineStatus === 'error' ? 'bg-red-500' :
+                  'bg-gray-600'
+              }`}
           />
           {model.name}
           {canSwitch && <span className="text-gray-700">↕</span>}
         </button>
 
-        <InstallButton />
+        {/* display flex , gap 8px */}
+        <div className='flex gap-4'>
+          <InstallButton />
 
-        {/* GitHub link */}
-        <a
-          href={GITHUB_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1.5 text-gray-500 hover:text-white transition-colors duration-150 text-xs"
-          aria-label="View source on GitHub"
-        >
-          <GitHubIcon />
-          <span className="hidden sm:inline font-mono text-[10px] tracking-wide">GitHub</span>
-        </a>
+
+          {/* GitHub link */}
+          <a
+            href={GITHUB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-gray-500 hover:text-white transition-colors duration-150 text-xs"
+            aria-label="View source on GitHub"
+          >
+            <GitHubIcon />
+            <span className="hidden sm:inline font-mono text-[10px] tracking-wide">GitHub</span>
+          </a>
+        </div>
       </nav>
 
       {showDialog && <ModelSwitchDialog onClose={() => setShowDialog(false)} />}
