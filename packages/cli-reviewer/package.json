@@ -1,0 +1,31 @@
+{
+  "name": "cr-reviewer",
+  "version": "0.1.0",
+  "description": "Local AI code reviewer powered by Ollama — no server, no data leaves your machine",
+  "type": "module",
+  "bin": {
+    "cr": "./bin/cr.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "bin",
+    "src",
+    "lib"
+  ],
+  "keywords": [
+    "code-review",
+    "ollama",
+    "ai",
+    "cli",
+    "local-llm"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "cli-progress": "^3.12.0",
+    "ora": "^8.0.1",
+    "parse-diff": "^0.11.1",
+    "yargs": "^17.7.2"
+  }
+}

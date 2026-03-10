@@ -3,6 +3,7 @@ import { useStore } from '../../store/useStore'
 import { getModelById } from '../../lib/models'
 import ModelSwitchDialog from '../model/ModelSwitchDialog'
 import InstallButton from './InstallButton'
+import { useHashRoute } from '../../hooks/useHashRoute'
 
 const GITHUB_URL = 'https://github.com/honeycoder96/clientside-codereviewer'
 
@@ -24,15 +25,17 @@ export default function Navbar() {
   const selectedModel = useStore((s) => s.selectedModel)
   const engineStatus = useStore((s) => s.engineStatus)
   const [showDialog, setShowDialog] = useState(false)
+  const route = useHashRoute()
 
   const model = getModelById(selectedModel)
   const canSwitch = engineStatus !== 'loading'
+  const isCLI = route === '/cli'
 
   return (
     <>
       <nav className="flex items-center justify-between px-4 h-10 bg-gray-950 border-b border-gray-800 flex-shrink-0">
-        {/* Branding */}
-        <div className="flex items-center gap-2">
+        {/* Branding — links to home */}
+        <a href="#/" className="flex items-center gap-2">
           <span className="text-[10px] font-mono text-indigo-400 tracking-widest uppercase select-none">
             WebGPU
           </span>
@@ -40,33 +43,64 @@ export default function Navbar() {
           <span className="text-[10px] font-mono text-gray-400 tracking-widest uppercase select-none">
             LLM
           </span>
-        </div>
+        </a>
 
-        {/* Center: model badge */}
-        <button
-          onClick={() => canSwitch && setShowDialog(true)}
-          disabled={!canSwitch}
-          title={canSwitch ? 'Switch model' : 'Cannot switch while model is loading'}
-          className={`flex items-center gap-1.5 text-[10px] font-mono px-2 py-1 rounded border transition-colors ${canSwitch
-            ? 'border-gray-700 text-gray-500 hover:border-indigo-500 hover:text-indigo-300 cursor-pointer'
-            : 'border-gray-800 text-gray-700 cursor-not-allowed'
-            }`}
-        >
-          <span
-            className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${engineStatus === 'ready' ? 'bg-green-500' :
-              engineStatus === 'loading' ? 'bg-yellow-500' :
-                engineStatus === 'error' ? 'bg-red-500' :
-                  'bg-gray-600'
+        {/* Center: model badge (browser) or CLI indicator */}
+        {isCLI ? (
+          <div className="flex items-center gap-1.5 text-[10px] font-mono px-2 py-1 rounded border border-gray-800 text-gray-600 select-none">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 flex-shrink-0" />
+            cr-reviewer · ollama
+          </div>
+        ) : (
+          <button
+            onClick={() => canSwitch && setShowDialog(true)}
+            disabled={!canSwitch}
+            title={canSwitch ? 'Switch model' : 'Cannot switch while model is loading'}
+            className={`flex items-center gap-1.5 text-[10px] font-mono px-2 py-1 rounded border transition-colors ${canSwitch
+              ? 'border-gray-700 text-gray-500 hover:border-indigo-500 hover:text-indigo-300 cursor-pointer'
+              : 'border-gray-800 text-gray-700 cursor-not-allowed'
               }`}
-          />
-          {model.name}
-          {canSwitch && <span className="text-gray-700">↕</span>}
-        </button>
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${engineStatus === 'ready' ? 'bg-green-500' :
+                engineStatus === 'loading' ? 'bg-yellow-500' :
+                  engineStatus === 'error' ? 'bg-red-500' :
+                    'bg-gray-600'
+                }`}
+            />
+            {model.name}
+            {canSwitch && <span className="text-gray-700">↕</span>}
+          </button>
+        )}
 
-        {/* display flex , gap 8px */}
-        <div className='flex gap-4'>
+        <div className="flex items-center gap-4">
+          {/* Route nav */}
+          <div className="flex items-center gap-0.5">
+            <a
+              href="#/"
+              className="px-2 py-1 rounded text-[10px] font-mono tracking-wide transition-colors duration-150"
+              style={{
+                color: !isCLI ? '#818cf8' : '#4b5563',
+                background: !isCLI ? 'rgba(99,102,241,0.08)' : 'transparent',
+                border: !isCLI ? '1px solid rgba(99,102,241,0.2)' : '1px solid transparent',
+              }}
+            >
+              Browser
+            </a>
+            <a
+              href="#/cli"
+              className="px-2 py-1 rounded text-[10px] font-mono tracking-wide transition-colors duration-150"
+              style={{
+                color: isCLI ? '#34d399' : '#4b5563',
+                background: isCLI ? 'rgba(52,211,153,0.08)' : 'transparent',
+                border: isCLI ? '1px solid rgba(52,211,153,0.2)' : '1px solid transparent',
+              }}
+            >
+              CLI
+            </a>
+          </div>
+
           <InstallButton />
-
 
           {/* GitHub link */}
           <a

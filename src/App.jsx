@@ -3,6 +3,8 @@ import ReviewDashboard from './components/ReviewDashboard'
 import NoWebGPU from './components/model/NoWebGPU'
 import Navbar from './components/layout/Navbar'
 import CommandPalette from './components/CommandPalette'
+import CLIPage from './components/cli/CLIPage'
+import { useHashRoute } from './hooks/useHashRoute'
 
 const gpuSupported = typeof navigator !== 'undefined' && !!navigator.gpu
 
@@ -42,6 +44,8 @@ class ErrorBoundary extends Component {
 }
 
 function App() {
+  const route = useHashRoute()
+  if (route === '/cli') return <CLIPage />
   if (!gpuSupported) return <NoWebGPU />
   return <ReviewDashboard />
 }

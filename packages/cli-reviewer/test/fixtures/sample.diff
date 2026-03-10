@@ -1,0 +1,25 @@
+diff --git a/src/auth.js b/src/auth.js
+index abc123..def456 100644
+--- a/src/auth.js
++++ b/src/auth.js
+@@ -10,6 +10,14 @@ function login(user, pass) {
+   const db = require('./db')
++  // Missing input validation
++  if (!user) {
++    throw new Error('user required')
++  }
++  // SQL injection risk
++  const query = 'SELECT * FROM users WHERE name = "' + user + '"'
++  const result = db.query(query)
++  return result
+ }
+diff --git a/src/api.js b/src/api.js
+index 111aaa..222bbb 100644
+--- a/src/api.js
++++ b/src/api.js
+@@ -5,3 +5,8 @@ const express = require('express')
++app.get('/user', async (req, res) => {
++  const id = req.query.id
++  const user = await db.findById(id)
++  res.send(user)
++})
